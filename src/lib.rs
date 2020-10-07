@@ -15,7 +15,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub struct RedInfo {
     pub mode: u8, // 红包模式,随机红包1;均分红包0
     pub count: u128, // 红包数量
-    pub slogan: String, // 口号
+    pub slogan: String, // 祝福词
     pub balance: Balance, // 总金额
     pub remaining_balance: u128, // 红包剩余金额
 }
@@ -23,9 +23,8 @@ pub struct RedInfo {
 #[derive(Clone)]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct ReceivedRedInfo {
-    pub amount: Balance, // 领取到红包价值
-
-    pub redbag: Base58PublicKey, // 红包
+    pub amount: Balance, // 领取到的红包价值
+    pub redbag: Base58PublicKey, // 对应到红包结构
 }
 
 pub type RedInfoKey = Vec<u8>;
@@ -33,17 +32,17 @@ pub type RedInfoKey = Vec<u8>;
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct LinkDrop {
-    pub accounts: Map<PublicKey, Balance>,
-
-    pub red_info: Map<PublicKey, RedInfo>, // 发送红包信息，key为随机信息，value为红包信息
-
-    pub sender_redbag: Map<AccountId, Vec<Base58PublicKey>>, // 发送红包用户与红包关联关系
-
-    pub red_receive_record: Map<PublicKey, Vec<AccountId>>, // 红包领取记录(某红包被哪些人领取)
-
-    pub red_receive_detail: Map<(PublicKey, AccountId), u128>, // 红包领取详细信息（红包、领取人、领取数量）
-
-    pub receiver_redbag_record: Map<AccountId, Vec<ReceivedRedInfo>>, // 用户所领取的红包
+    // pub accounts: Map<PublicKey, Balance>,
+    // 红包库
+    pub red_info: Map<PublicKey, RedInfo>, 
+    // 记录用户发送的红包
+    pub sender_redbag: Map<AccountId, Vec<Base58PublicKey>>,
+    // 记录用户领取的红包
+    pub receiver_redbag_record: Map<AccountId, Vec<ReceivedRedInfo>>, 
+    // 红包领取记录(某红包被哪些人领取)
+    pub red_receive_record: Map<PublicKey, Vec<AccountId>>, 
+    // 红包领取详细信息（红包、领取人、领取数量）
+    pub red_receive_detail: Map<(PublicKey, AccountId), u128>, 
 }
 
 /// Access key allowance for linkdrop keys.
