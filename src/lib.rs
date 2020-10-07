@@ -9,6 +9,13 @@ use std::convert::TryInto;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+#[derive(Clone)]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct ClaimInfo {
+    pub user: AccountId,  // 领取者账户
+    pub amount: Balance, // 领取到的红包价值
+}
+
 /// 红包信息结构
 #[derive(Clone)]
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -18,6 +25,7 @@ pub struct RedInfo {
     pub slogan: String, // 祝福词
     pub balance: Balance, // 总金额
     pub remaining_balance: u128, // 红包剩余金额
+    pub claim_info: Vec<ClaimInfo>,
 }
 
 #[derive(Clone)]
@@ -26,6 +34,8 @@ pub struct ReceivedRedInfo {
     pub amount: Balance, // 领取到的红包价值
     pub redbag: Base58PublicKey, // 对应到红包结构
 }
+
+
 
 pub type RedInfoKey = Vec<u8>;
 
