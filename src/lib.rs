@@ -32,6 +32,7 @@ pub type RedInfoKey = Vec<u8>;
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct LinkDrop {
+    // TODO:
     // pub accounts: Map<PublicKey, Balance>,
     // 红包库
     pub red_info: Map<PublicKey, RedInfo>, 
