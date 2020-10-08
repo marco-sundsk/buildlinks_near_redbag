@@ -28,6 +28,7 @@ pub struct RedInfo {
     pub claim_info: Vec<ClaimInfo>,
 }
 
+// to be removed
 #[derive(Clone)]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct ReceivedRedInfo {
@@ -35,13 +36,12 @@ pub struct ReceivedRedInfo {
     pub redbag: Base58PublicKey, // 对应到红包结构
 }
 
-
-
+// to be removed
 pub type RedInfoKey = Vec<u8>;
 
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct LinkDrop {
+pub struct RedBag {
     // TODO:
     // pub accounts: Map<PublicKey, Balance>,
     // 红包库
@@ -49,10 +49,13 @@ pub struct LinkDrop {
     // 记录用户发送的红包
     pub sender_redbag: Map<AccountId, Vec<Base58PublicKey>>,
     // 记录用户领取的红包
+    pub receiver_redbag: Map<AccountId, Vec<Base58PublicKey>>,
+
+    // to be removed
     pub receiver_redbag_record: Map<AccountId, Vec<ReceivedRedInfo>>, 
-    // 红包领取记录(某红包被哪些人领取)
+    // to be removed 红包领取记录(某红包被哪些人领取)
     pub red_receive_record: Map<PublicKey, Vec<AccountId>>, 
-    // 红包领取详细信息（红包、领取人、领取数量）
+    // to be removed 红包领取详细信息（红包、领取人、领取数量）
     pub red_receive_detail: Map<(PublicKey, AccountId), u128>, 
 }
 
@@ -66,8 +69,8 @@ pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: u64 = 20_000_000_000_000;
 const NO_DEPOSIT: u128 = 0;
 
 #[ext_contract(ext_self)]
-pub trait ExtLinkDrop {
-    /// Callback after creating account and claiming linkdrop.
+pub trait ExtRedBag {
+    /// Callback after creating account and claiming redbag.
     fn on_account_created_and_claimed(&mut self, amount: U128) -> bool;
 }
 
@@ -84,30 +87,37 @@ fn is_promise_success() -> bool {
 }
 
 #[near_bindgen]
-impl LinkDrop {
+impl RedBag {
 
-    ///  发（创建）红包功能
+    ///  发红包功能
     #[payable]
-    pub fn send_redbag(&mut self, public_key: Base58PublicKey, count: u128, mode: u8, slogan: String) -> Promise {
+    pub fn send_redbag(
+        &mut self, 
+        public_key: Base58PublicKey, 
+        count: u128, 
+        mode: u8, 
+        slogan: String) -> Promise {
+
         assert!(
             env::attached_deposit() > ACCESS_KEY_ALLOWANCE,
             "Attached deposit must be greater than ACCESS_KEY_ALLOWANCE"
         );
 
-        let pk = public_key.clone().into();
+        let pk: PublicKey = public_key.clone().into();
+        assert!(self.red_info.get(&pk).is_none(), "The public_key already exists");
 
-        // 红包信息
+        // 初始化红包信息并记录
         let new_red_info = RedInfo {
-            mode: mode,
-            count: count,
-            slogan: slogan,
+            mode,
+            count,
+            slogan,
             balance: env::attached_deposit(),
             remaining_balance: env::attached_deposit(),
+            claim_info: Vec::new(),
         };
-
-        assert!(self.red_info.get(&pk).is_none(), "existed");
-
         self.red_info.insert(&pk, &new_red_info);
+        
+        // 更新账户的发红包记录
         let mut relation_vec = self.sender_redbag.get(&env::signer_account_id()).unwrap_or(Vec::new());
         relation_vec.push(public_key.clone());
         self.sender_redbag.insert(&env::signer_account_id(), &relation_vec);
@@ -120,7 +130,7 @@ impl LinkDrop {
         )
     }
 
-    /// 创建新用户并同时领取红包
+    /// 创建新用户同时领取红包
     pub fn create_account_and_claim(
         &mut self,
         new_account_id: AccountId,
@@ -130,44 +140,26 @@ impl LinkDrop {
 
         // 查看红包是否存在
         let redbag = self.red_info.get(&pk);
-        assert!(redbag.is_some(), "红包不存在");
+        assert!(redbag.is_some(), "No corresponding redbag found.");
 
         // 查看红包剩余数量是否可被领取
-        let temp_redbag = &redbag.unwrap();
-        let count = temp_redbag.count;
-        let remaining_balance = temp_redbag.remaining_balance;
-
-        let mut record = self.red_receive_record.get(&pk).unwrap_or(Vec::new());
-        assert!(record.len() < count.try_into().unwrap(), "红包已被领取完");
-
-        record.push(String::from(&new_account_id));
-        self.red_receive_record.insert(&pk, &record);
-
-        self.red_receive_detail.insert(&(pk.clone().into(), new_account_id.clone()), &count);
-
-        // 分配红包
-        let mut receiver_record = self.receiver_redbag_record.get(&new_account_id).unwrap_or(Vec::new());
-
-        let amount: Balance = self.random_amount(remaining_balance);
-
-        let received_redbag_info = ReceivedRedInfo {
-            amount: amount,
-            redbag: Base58PublicKey(pk.clone().into()),
+        let mut rb = &redbag.unwrap();
+        assert!(rb.claim_info.len() < rb.count, "Sorry, the redbag has been claimed out.");
+        // 领取红包
+        let amount: Balance = self.random_amount(rb.remaining_balance);
+        // 更新红包记录
+        rb.remaining_balance -= amount;
+        let ci = ClaimInfo {
+            user: new_account_id.clone(),
+            amount,
         };
-
-        receiver_record.push(received_redbag_info);
-        self.receiver_redbag_record.insert(&new_account_id, &receiver_record);
-
-        let new_red_info = RedInfo {
-            mode: temp_redbag.clone().mode,
-            count: temp_redbag.clone().count,
-            slogan: temp_redbag.clone().slogan,
-            balance: temp_redbag.clone().balance,
-            remaining_balance: temp_redbag.clone().remaining_balance - amount,
-        };
-
-        self.red_info.insert(&pk, &new_red_info);
-
+        rb.claim_info.push(ci);
+        self.red_info.insert(&pk, &rb);
+        // 更新领取人记录
+        let mut receiver_record = self.receiver_redbag.get(&new_account_id).unwrap_or(Vec::new());
+        receiver_record.push(pk.clone());
+        self.receiver_redbag.insert(&new_account_id, &receiver_record);
+        
         Promise::new(new_account_id)
             .create_account()
             .add_full_access_key(new_public_key.into())
