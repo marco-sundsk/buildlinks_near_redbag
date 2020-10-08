@@ -2,7 +2,7 @@
 name = "redbag"
 version = "0.1.0"
 authors = ["Buildlinks Inc <sun.dsk1@gmail.com>"]
-edition = "2020"
+edition = "2018"
 publish = false
 
 [lib]
