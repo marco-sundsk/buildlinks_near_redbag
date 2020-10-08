@@ -182,7 +182,7 @@ impl RedBag {
         assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
             "Sorry, the redbag has been claimed out.");
         // 判断用户是否领取过
-        assert!(&(rb.claim_info).filter(|x| x.user == account_id).count() == 0, 
+        assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
             "Sorry, you have claimed this redbag before.");
         // 领取红包
         let amount: Balance = self.random_amount(rb.remaining_balance);
@@ -210,7 +210,7 @@ impl RedBag {
 
         let mut index = 0;
         for item in red_list.clone().iter() {
-            if item == &public_key {
+            if item == &pk {
                 break;
             }
             index += 1;
@@ -244,7 +244,7 @@ impl RedBag {
     /// 查询用户所发的所有红包
     pub fn show_redbag(self, account_id: AccountId) -> Vec<Base58PublicKey> {
         let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
-        relation_vec
+        relation_vec.iter().map(|x| x.clone().try_into().unwrap()).collect()
     }
 
     /// 生成随机
