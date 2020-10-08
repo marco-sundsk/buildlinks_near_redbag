@@ -49,7 +49,7 @@ pub struct RedBag {
     // 记录用户发送的红包
     pub sender_redbag: Map<AccountId, Vec<Base58PublicKey>>,
     // 记录用户领取的红包
-    pub receiver_redbag: Map<AccountId, Vec<Base58PublicKey>>,
+    pub receiver_redbag: Map<AccountId, Vec<PublicKey>>,
 
     // to be removed
     pub receiver_redbag_record: Map<AccountId, Vec<ReceivedRedInfo>>, 
@@ -143,8 +143,8 @@ impl RedBag {
         assert!(redbag.is_some(), "No corresponding redbag found.");
 
         // 查看红包剩余数量是否可被领取
-        let mut rb = &redbag.unwrap();
-        assert!(rb.claim_info.len() < rb.count, "Sorry, the redbag has been claimed out.");
+        let mut rb = &mut redbag.unwrap();
+        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), "Sorry, the redbag has been claimed out.");
         // 领取红包
         let amount: Balance = self.random_amount(rb.remaining_balance);
         // 更新红包记录
@@ -215,6 +215,7 @@ impl RedBag {
             slogan: temp_redbag.clone().slogan,
             balance: temp_redbag.clone().balance,
             remaining_balance: temp_redbag.clone().remaining_balance - amount,
+            claim_info: Vec::new(),
         };
 
         self.red_info.insert(&pk, &new_red_info);
