@@ -91,7 +91,7 @@ impl RedBag {
 
         // 初始化红包信息并记录
         let new_red_info = RedInfo {
-            owner,
+            owner: owner.clone(),
             mode,
             count,
             slogan,
@@ -227,9 +227,9 @@ impl RedBag {
         let redbag = self.red_info.get(&pk);
         assert!(redbag.is_some(), "No corresponding redbag found.");
         let rb = &redbag.unwrap();
-        let ci = rb.claim_info;
+        // let ci = rb.claim_info;
         // TODO: 
-        let ci_json: Vec<_> = ci.iter().map(
+        let ci_json: Vec<_> = rb.claim_info.iter().map(
             |x| format!("{{\"account\":\"{}\", \"amount\":{}}}", x.user, x.amount)
         ).collect();
         let recvs_json = format!("[{}]", ci_json.join(","));
@@ -251,7 +251,7 @@ impl RedBag {
 
         // 获取随机比率
         let random_seed = env::random_seed();
-        let share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
+        let mut share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
         // let mut share_rate = 0_u8;
         // for item in random_seed {
         //     share_rate = share_rate.wrapping_add(item);
