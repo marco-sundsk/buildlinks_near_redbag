@@ -114,7 +114,7 @@ impl RedBag {
         )
     }
 
-    fn claim_redbag(&mut self, pk: PublicKey, account_id: AccountId) {
+    fn claim_redbag(&mut self, pk: PublicKey, account_id: AccountId) -> Balance {
         // 查看红包是否存在
         let redbag = self.red_info.get(&pk);
         assert!(redbag.is_some(), "No corresponding redbag found.");
@@ -136,6 +136,7 @@ impl RedBag {
         let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
         receiver_record.push(pk.clone());
         self.receiver_redbag.insert(&account_id, &receiver_record);
+        amount
     }
 
     /// 创建新用户同时领取红包
@@ -145,7 +146,7 @@ impl RedBag {
         new_public_key: Base58PublicKey) -> Promise {
 
         let pk = env::signer_account_pk();
-        self.claim_redbag(pk.clone(), new_account_id.clone());
+        let amount = self.claim_redbag(pk.clone(), new_account_id.clone());
 
         // // 查看红包是否存在
         // let redbag = self.red_info.get(&pk);
