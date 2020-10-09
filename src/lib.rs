@@ -232,8 +232,8 @@ impl RedBag {
         ).collect();
         let recvs_json = format!("[{}]", ci_json.join(","));
 
-        format!("{{\"owner\":\"{}\", \"count\":{}, \"mode\":{}, \"slogan\":\"{}\",\"list\":\"{}\"}}", 
-            rb.owner, rb.count, rb.mode, rb.slogan, recvs_json)
+        format!("{{\"owner\":\"{}\", \"count\":{}, \"balance\":{}, \"remaining\":{}, \"mode\":{}, \"slogan\":\"{}\",\"list\":\"{}\"}}", 
+            rb.owner, rb.count, rb.balance, rb.remaining_balance, rb.mode, rb.slogan, recvs_json)
     }
 
     /// 查询用户所发的所有红包
