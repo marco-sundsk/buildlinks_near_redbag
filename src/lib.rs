@@ -114,14 +114,7 @@ impl RedBag {
         )
     }
 
-    /// 创建新用户同时领取红包
-    pub fn create_account_and_claim(
-        &mut self,
-        new_account_id: AccountId,
-        new_public_key: Base58PublicKey) -> Promise {
-
-        let pk = env::signer_account_pk();
-
+    fn claim_redbag(&mut self, pk: PublicKey, account_id: AccountId) {
         // 查看红包是否存在
         let redbag = self.red_info.get(&pk);
         assert!(redbag.is_some(), "No corresponding redbag found.");
@@ -134,15 +127,47 @@ impl RedBag {
         // 更新红包记录
         rb.remaining_balance -= amount;
         let ci = ClaimInfo {
-            user: new_account_id.clone(),
+            user: account_id.clone(),
             amount,
         };
         rb.claim_info.push(ci);
         self.red_info.insert(&pk, &rb);
         // 更新领取人记录
-        let mut receiver_record = self.receiver_redbag.get(&new_account_id).unwrap_or(Vec::new());
+        let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
         receiver_record.push(pk.clone());
-        self.receiver_redbag.insert(&new_account_id, &receiver_record);
+        self.receiver_redbag.insert(&account_id, &receiver_record);
+    }
+
+    /// 创建新用户同时领取红包
+    pub fn create_account_and_claim(
+        &mut self,
+        new_account_id: AccountId,
+        new_public_key: Base58PublicKey) -> Promise {
+
+        let pk = env::signer_account_pk();
+        self.claim_redbag(pk.clone(), new_account_id.clone());
+
+        // // 查看红包是否存在
+        // let redbag = self.red_info.get(&pk);
+        // assert!(redbag.is_some(), "No corresponding redbag found.");
+
+        // // 查看红包剩余数量是否可被领取
+        // let mut rb = &mut redbag.unwrap();
+        // assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), "Sorry, the redbag has been claimed out.");
+        // // 领取红包
+        // let amount: Balance = self.random_amount(rb.remaining_balance);
+        // // 更新红包记录
+        // rb.remaining_balance -= amount;
+        // let ci = ClaimInfo {
+        //     user: new_account_id.clone(),
+        //     amount,
+        // };
+        // rb.claim_info.push(ci);
+        // self.red_info.insert(&pk, &rb);
+        // // 更新领取人记录
+        // let mut receiver_record = self.receiver_redbag.get(&new_account_id).unwrap_or(Vec::new());
+        // receiver_record.push(pk.clone());
+        // self.receiver_redbag.insert(&new_account_id, &receiver_record);
         
         Promise::new(new_account_id)
             .create_account()
