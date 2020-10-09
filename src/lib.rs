@@ -122,7 +122,7 @@ impl RedBag {
 
         // 查看红包剩余数量是否可被领取
         let mut rb = &mut redbag.unwrap();
-        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
+        assert!(rb.claim_info.len() < rb.count as usize, 
             "Sorry, the redbag has been claimed out.");
         assert!(rb.remaining_balance != 0, 
             "Sorry, the redbag has been revoked.");
@@ -148,6 +148,7 @@ impl RedBag {
         let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
         receiver_record.push(pk.clone());
         self.receiver_redbag.insert(&account_id, &receiver_record);
+        
         amount
     }
 
