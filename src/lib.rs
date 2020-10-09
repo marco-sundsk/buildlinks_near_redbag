@@ -45,6 +45,9 @@ pub struct RedBag {
 /// take it as additional fee used by creation new account.
 const ACCESS_KEY_ALLOWANCE: u128 = 1_000_000_000_000_000_000_000_000;
 
+/// the minimum balance that an account must contain to maintain state fee.
+const MIN_REDBAG_SHARE: u128 = 100_000_000_000_000_000_000_000;
+
 /// Gas attached to the callback from account creation.
 pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: u64 = 20_000_000_000_000;
 
@@ -126,6 +129,8 @@ impl RedBag {
             "Sorry, the redbag has been claimed out.");
         assert!(rb.remaining_balance != 0, 
             "Sorry, the redbag has been revoked.");
+        assert!(rb.remaining_balance >= MIN_REDBAG_SHARE, 
+            "Sorry, the redbag has few value to be claimed.");
         // 判断用户是否领取过
         assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
             "Sorry, you have claimed this redbag before.");
@@ -253,7 +258,12 @@ impl RedBag {
             share_rate = 153;
         }
 
-        min_share.wrapping_mul(share_rate.into())
+        let random_share = min_share.wrapping_mul(share_rate.into());
+        if random_share >= MIN_REDBAG_SHARE {
+            random_share
+        } else {
+            MIN_REDBAG_SHARE
+        }
     }
 
     /// Returns the balance associated with given key.
