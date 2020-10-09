@@ -136,9 +136,13 @@ impl RedBag {
             "Sorry, you have claimed this redbag before.");
         // 领取红包 如果是最后一个领取人，则拿走所有
         let amount = if rb.claim_info.len() == rb.count as usize - 1 { 
-                rb.remaining_balance 
-            } else { 
+            rb.remaining_balance 
+        } else { 
+            if rb.mode == 1 {
                 self.random_amount(rb.remaining_balance)
+            } else {
+                self.even_amount(rb.balance.into(), rb.count)
+            }
         };
         
         // 更新红包记录
@@ -261,6 +265,15 @@ impl RedBag {
         let random_share = min_share.wrapping_mul(share_rate.into());
         if random_share >= MIN_REDBAG_SHARE {
             random_share
+        } else {
+            MIN_REDBAG_SHARE
+        }
+    }
+
+    fn even_amount(&self, total_amount: u128, count: u128) -> u128 {
+        let even_share = total_amount / count;
+        if even_share >= MIN_REDBAG_SHARE {
+            even_share
         } else {
             MIN_REDBAG_SHARE
         }
