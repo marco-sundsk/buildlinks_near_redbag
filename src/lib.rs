@@ -9,6 +9,7 @@ use std::convert::TryInto;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+/// 红包的领取信息结构
 #[derive(Clone)]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct ClaimInfo {
@@ -20,6 +21,7 @@ pub struct ClaimInfo {
 #[derive(Clone)]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct RedInfo {
+    pub owner: AccountId,  // 红包的发送人
     pub mode: u8, // 红包模式,随机红包1;均分红包0
     pub count: u128, // 红包数量
     pub slogan: String, // 祝福词
@@ -27,17 +29,6 @@ pub struct RedInfo {
     pub remaining_balance: u128, // 红包剩余金额
     pub claim_info: Vec<ClaimInfo>,
 }
-
-// to be removed
-#[derive(Clone)]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct ReceivedRedInfo {
-    pub amount: Balance, // 领取到的红包价值
-    pub redbag: Base58PublicKey, // 对应到红包结构
-}
-
-// to be removed
-pub type RedInfoKey = Vec<u8>;
 
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
@@ -48,13 +39,6 @@ pub struct RedBag {
     pub sender_redbag: Map<AccountId, Vec<PublicKey>>,
     // 记录用户领取的红包
     pub receiver_redbag: Map<AccountId, Vec<PublicKey>>,
-
-    // to be removed
-    pub receiver_redbag_record: Map<AccountId, Vec<ReceivedRedInfo>>, 
-    // to be removed 红包领取记录(某红包被哪些人领取)
-    pub red_receive_record: Map<PublicKey, Vec<AccountId>>, 
-    // to be removed 红包领取详细信息（红包、领取人、领取数量）
-    pub red_receive_detail: Map<(PublicKey, AccountId), u128>, 
 }
 
 /// Access key allowance for linkdrop keys.
@@ -101,11 +85,13 @@ impl RedBag {
             "Attached deposit must be greater than ACCESS_KEY_ALLOWANCE"
         );
 
+        let owner = env::signer_account_id();
         let pk: PublicKey = public_key.clone().into();
         assert!(self.red_info.get(&pk).is_none(), "The public_key already exists");
 
         // 初始化红包信息并记录
         let new_red_info = RedInfo {
+            owner,
             mode,
             count,
             slogan,
@@ -116,9 +102,9 @@ impl RedBag {
         self.red_info.insert(&pk, &new_red_info);
         
         // 更新账户的发红包记录
-        let mut relation_vec = self.sender_redbag.get(&env::signer_account_id()).unwrap_or(Vec::new());
+        let mut relation_vec = self.sender_redbag.get(&owner).unwrap_or(Vec::new());
         relation_vec.push(pk.clone());
-        self.sender_redbag.insert(&env::signer_account_id(), &relation_vec);
+        self.sender_redbag.insert(&owner, &relation_vec);
 
         Promise::new(env::current_account_id()).add_access_key(
             pk,
@@ -202,43 +188,54 @@ impl RedBag {
         Promise::new(account_id).transfer(amount)
     }
 
-    /// 发红包任用来撤回对应public_key的红包剩余金额
-    pub fn revoke(&mut self, public_key: Base58PublicKey) -> &str {
-        let pk = public_key.clone().into();
-        self.red_info.remove(&pk);
-        let mut red_list = self.sender_redbag.get(&env::signer_account_id()).unwrap();
+    /// 红包所有人撤回对应public_key的红包剩余金额
+    pub fn revoke(&mut self, public_key: Base58PublicKey) -> Promise {
+        let pk: PublicKey = public_key.clone().into();
+        let account_id = env::signer_account_id();
+        // 查看红包是否存在
+        let redbag = self.red_info.get(&pk);
+        assert!(redbag.is_some(), "No corresponding redbag found.");
+        // 查看红包剩余数量和金额是否足够撤回
+        let mut rb = &mut redbag.unwrap();
+        assert!(rb.owner == account_id, 
+            "Sorry, Only redbag owner can revoke.");
+        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
+            "Sorry, the redbag has been claimed out.");
+        // 红包剩余
+        let amount: Balance = rb.remaining_balance;
+        // 更新红包记录
+        rb.remaining_balance = 0;
+        let ci = ClaimInfo {
+            user: account_id.clone(),
+            amount,
+        };
+        rb.claim_info.push(ci);
+        self.red_info.insert(&pk, &rb);
+        // 更新领取人记录
+        let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
+        receiver_record.push(pk.clone());
+        self.receiver_redbag.insert(&account_id, &receiver_record);
 
-        let mut index = 0;
-        for item in red_list.clone().iter() {
-            if item == &pk {
-                break;
-            }
-            index += 1;
-        }
-
-        red_list.remove(index);
-        self.sender_redbag.insert(&env::signer_account_id(), &red_list);
-        "revoke success"
+        Promise::new(account_id).transfer(amount)
     }
 
-    /// 查询用户发的红包
+    /// ******************** view functions ***************************
+    /// 查询红包领取详情
     pub fn show_claim_info(self, public_key: Base58PublicKey) -> String {
         let pk = public_key.into();
-        let red_info_obj = self.red_info.get(&pk);
+        // 查看红包是否存在
+        let redbag = self.red_info.get(&pk);
+        assert!(redbag.is_some(), "No corresponding redbag found.");
+        let rb = &redbag.unwrap();
+        let ci = rb.claim_info;
+        // TODO: 
+        let ci_json: Vec<_> = ci.iter().map(
+            |x| format!("{{\"account\":\"{}\", \"amount\":{}}}", x.user, x.amount)
+        ).collect();
+        let recvs_json = format!("[{}]", ci_json.join(","));
 
-        assert!(red_info_obj.is_some(), "红包不存在");
-
-        let receive_record = self.red_receive_record.get(&pk).unwrap_or(Vec::new());
-
-        let mut record_list = String::from("[");
-        for item in receive_record.iter() {
-            let amount = self.red_receive_detail.get(&(pk.clone().into(), String::from(item))).unwrap();
-            record_list.push_str(&format!("{}\"account\":\"{}\", \"amount\":{}{},", "{", item, amount, "}"));
-        }
-        record_list.push_str("]");
-
-        let temp_red_info = red_info_obj.unwrap();
-        format!("{}\"count\":{}, \"mode\":{}, \"slogan\":\"{}\",\"list\":\"{}\"{}", "{", temp_red_info.count, temp_red_info.mode, temp_red_info.slogan, record_list, "}")
+        format!("{{\"owner\":\"{}\", \"count\":{}, \"mode\":{}, \"slogan\":\"{}\",\"list\":\"{}\"}}", 
+            rb.owner, rb.count, rb.mode, rb.slogan, recvs_json)
     }
 
     /// 查询用户所发的所有红包
@@ -247,28 +244,27 @@ impl RedBag {
         relation_vec.iter().map(|x| x.clone().try_into().unwrap()).collect()
     }
 
-    /// 生成随机
+    /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
     fn random_amount(&self, total_amount: u128) -> u128 {
         let u8_max_value: u128 = u8::max_value().into();
-        let block_length = total_amount / u8_max_value;
+        let min_share: u128 = total_amount / u8_max_value;
 
+        // 获取随机比率
         let random_seed = env::random_seed();
+        let share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
+        // let mut share_rate = 0_u8;
+        // for item in random_seed {
+        //     share_rate = share_rate.wrapping_add(item);
+        // }
 
-        // 计算总 seed 值
-        let mut block_index = 0_u8;
-
-        for item in random_seed {
-            block_index = block_index.wrapping_add(item);
+        // 限制过大或过小的比率在2%到60%之间
+        if share_rate < 5_u8 {
+            share_rate = 5;
+        } else if share_rate > 153 {
+            share_rate = 153;
         }
 
-        // TODO 有待检查
-        if block_index < 1 {
-            block_index += 1;
-        } else if block_index > 253 {
-            block_index -= 1;
-        }
-
-        block_length.wrapping_mul(block_index.into())
+        min_share.wrapping_mul(share_rate.into())
     }
 
     /// Returns the balance associated with given key.
