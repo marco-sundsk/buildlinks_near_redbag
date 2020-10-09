@@ -41,7 +41,7 @@ pub struct RedBag {
     pub receiver_redbag: Map<AccountId, Vec<PublicKey>>,
 }
 
-/// Access key allowance for linkdrop keys.
+/// Access key allowance for redbag keys.
 const ACCESS_KEY_ALLOWANCE: u128 = 1_000_000_000_000_000_000_000_000;
 
 /// Gas attached to the callback from account creation.
@@ -121,7 +121,11 @@ impl RedBag {
 
         // 查看红包剩余数量是否可被领取
         let mut rb = &mut redbag.unwrap();
-        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), "Sorry, the redbag has been claimed out.");
+        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
+            "Sorry, the redbag has been claimed out.");
+        // 判断用户是否领取过
+        assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
+            "Sorry, you have claimed this redbag before.");
         // 领取红包
         let amount: Balance = self.random_amount(rb.remaining_balance);
         // 更新红包记录
@@ -148,28 +152,6 @@ impl RedBag {
         let pk = env::signer_account_pk();
         let amount = self.claim_redbag(pk.clone(), new_account_id.clone());
 
-        // // 查看红包是否存在
-        // let redbag = self.red_info.get(&pk);
-        // assert!(redbag.is_some(), "No corresponding redbag found.");
-
-        // // 查看红包剩余数量是否可被领取
-        // let mut rb = &mut redbag.unwrap();
-        // assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), "Sorry, the redbag has been claimed out.");
-        // // 领取红包
-        // let amount: Balance = self.random_amount(rb.remaining_balance);
-        // // 更新红包记录
-        // rb.remaining_balance -= amount;
-        // let ci = ClaimInfo {
-        //     user: new_account_id.clone(),
-        //     amount,
-        // };
-        // rb.claim_info.push(ci);
-        // self.red_info.insert(&pk, &rb);
-        // // 更新领取人记录
-        // let mut receiver_record = self.receiver_redbag.get(&new_account_id).unwrap_or(Vec::new());
-        // receiver_record.push(pk.clone());
-        // self.receiver_redbag.insert(&new_account_id, &receiver_record);
-        
         Promise::new(new_account_id)
             .create_account()
             .add_full_access_key(new_public_key.into())
@@ -186,30 +168,7 @@ impl RedBag {
     pub fn claim(&mut self, account_id: AccountId) -> Promise {
         let pk = env::signer_account_pk();
 
-        // 查看红包是否存在
-        let redbag = self.red_info.get(&pk);
-        assert!(redbag.is_some(), "No corresponding redbag found.");
-        // 查看红包剩余数量是否可被领取
-        let mut rb = &mut redbag.unwrap();
-        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
-            "Sorry, the redbag has been claimed out.");
-        // 判断用户是否领取过
-        assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
-            "Sorry, you have claimed this redbag before.");
-        // 领取红包
-        let amount: Balance = self.random_amount(rb.remaining_balance);
-        // 更新红包记录
-        rb.remaining_balance -= amount;
-        let ci = ClaimInfo {
-            user: account_id.clone(),
-            amount,
-        };
-        rb.claim_info.push(ci);
-        self.red_info.insert(&pk, &rb);
-        // 更新领取人记录
-        let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
-        receiver_record.push(pk.clone());
-        self.receiver_redbag.insert(&account_id, &receiver_record);
+        let amount = self.claim_redbag(pk.clone(), account_id.clone());
 
         Promise::new(account_id).transfer(amount)
     }
@@ -253,8 +212,7 @@ impl RedBag {
         let redbag = self.red_info.get(&pk);
         assert!(redbag.is_some(), "No corresponding redbag found.");
         let rb = &redbag.unwrap();
-        // let ci = rb.claim_info;
-        // TODO: 
+
         let ci_json: Vec<_> = rb.claim_info.iter().map(
             |x| format!("{{\"account\":\"{}\", \"amount\":{}}}", x.user, x.amount)
         ).collect();
@@ -278,10 +236,6 @@ impl RedBag {
         // 获取随机比率
         let random_seed = env::random_seed();
         let mut share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
-        // let mut share_rate = 0_u8;
-        // for item in random_seed {
-        //     share_rate = share_rate.wrapping_add(item);
-        // }
 
         // 限制过大或过小的比率在2%到60%之间
         if share_rate < 5_u8 {
