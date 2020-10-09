@@ -41,7 +41,8 @@ pub struct RedBag {
     pub receiver_redbag: Map<AccountId, Vec<PublicKey>>,
 }
 
-/// Access key allowance for redbag keys.
+/// Access key allowance for redbag keys, 
+/// take it as additional fee used by creation new account.
 const ACCESS_KEY_ALLOWANCE: u128 = 1_000_000_000_000_000_000_000_000;
 
 /// Gas attached to the callback from account creation.
@@ -81,8 +82,8 @@ impl RedBag {
         slogan: String) -> Promise {
 
         assert!(
-            env::attached_deposit() > ACCESS_KEY_ALLOWANCE,
-            "Attached deposit must be greater than ACCESS_KEY_ALLOWANCE"
+            env::attached_deposit() > count * ACCESS_KEY_ALLOWANCE,
+            "Attached deposit must be greater than count * ACCESS_KEY_ALLOWANCE"
         );
 
         let owner = env::signer_account_id();
@@ -95,8 +96,8 @@ impl RedBag {
             mode,
             count,
             slogan,
-            balance: env::attached_deposit(),
-            remaining_balance: env::attached_deposit(),
+            balance: env::attached_deposit() - count * ACCESS_KEY_ALLOWANCE,
+            remaining_balance: env::attached_deposit() - count * ACCESS_KEY_ALLOWANCE,
             claim_info: Vec::new(),
         };
         self.red_info.insert(&pk, &new_red_info);
@@ -123,11 +124,18 @@ impl RedBag {
         let mut rb = &mut redbag.unwrap();
         assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
             "Sorry, the redbag has been claimed out.");
+        assert!(rb.remaining_balance != 0, 
+            "Sorry, the redbag has been revoked.");
         // 判断用户是否领取过
         assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
             "Sorry, you have claimed this redbag before.");
-        // 领取红包
-        let amount: Balance = self.random_amount(rb.remaining_balance);
+        // 领取红包 如果是最后一个领取人，则拿走所有
+        if rb.claim_info.len() + 1 == rb.count.try_into().unwrap() {
+            let amount: Balance = rb.remaining_balance;
+        } else {
+            let amount: Balance = self.random_amount(rb.remaining_balance);
+        }
+        
         // 更新红包记录
         rb.remaining_balance -= amount;
         let ci = ClaimInfo {
