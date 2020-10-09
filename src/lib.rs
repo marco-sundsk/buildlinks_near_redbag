@@ -43,7 +43,7 @@ pub struct RedBag {
 
 /// Access key allowance for redbag keys, 
 /// take it as additional fee used by creation new account.
-const ACCESS_KEY_ALLOWANCE: u128 = 1_000_000_000_000_000_000_000_000;
+const ACCESS_KEY_ALLOWANCE: u128 = 100_000_000_000_000_000_000_000;
 
 /// the minimum balance that an account must contain to maintain state fee.
 const MIN_REDBAG_SHARE: u128 = 100_000_000_000_000_000_000_000;
