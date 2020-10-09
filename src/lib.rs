@@ -130,10 +130,11 @@ impl RedBag {
         assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
             "Sorry, you have claimed this redbag before.");
         // 领取红包 如果是最后一个领取人，则拿走所有
-        if rb.claim_info.len() + 1 == rb.count.try_into().unwrap() {
-            let amount: Balance = rb.remaining_balance;
+        let amount;
+        if rb.claim_info.len() == rb.count as usize - 1 {
+            amount = rb.remaining_balance;
         } else {
-            let amount: Balance = self.random_amount(rb.remaining_balance);
+            amount = self.random_amount(rb.remaining_balance);
         }
         
         // 更新红包记录
