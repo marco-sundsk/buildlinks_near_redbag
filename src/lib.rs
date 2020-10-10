@@ -6,6 +6,8 @@ use near_sdk::{
 };
 use std::convert::TryInto;
 
+mod internal;
+
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
@@ -32,7 +34,13 @@ pub struct RedInfo {
 
 #[near_bindgen]
 #[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct RedBag {
+pub struct RedBagContract {
+    /// The account ID of the owner who's maintaining the contract.
+    /// NOTE: This is different from the current account ID which is cur user of this contract.
+    /// The owner of the contract can withdraw the profit of the contract.
+    pub owner_id: AccountId,
+    /// the pre-exist balance in this contract, including state storage fee
+    pub pre_balance: Balance,
     // 红包库
     pub red_info: Map<PublicKey, RedInfo>, 
     // 记录用户发送的红包
@@ -41,7 +49,13 @@ pub struct RedBag {
     pub receiver_redbag: Map<AccountId, Vec<PublicKey>>,
 }
 
-/// Access key allowance for redbag keys, 
+impl Default for RedBagContract {
+    fn default() -> Self {
+        env::panic(b"RedBag contract should be initialized before usage")
+    }
+}
+
+/// Access key allowance for RedBagContract keys, 
 /// take it as additional fee used by creation new account.
 const ACCESS_KEY_ALLOWANCE: u128 = 100_000_000_000_000_000_000_000;
 
@@ -55,7 +69,7 @@ pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: u64 = 20_000_000_000_000;
 const NO_DEPOSIT: u128 = 0;
 
 #[ext_contract(ext_self)]
-pub trait ExtRedBag {
+pub trait ExtRedBagContract {
     /// Callback after creating account and claiming redbag.
     fn on_account_created_and_claimed(&mut self, amount: U128) -> bool;
 }
@@ -73,7 +87,24 @@ fn is_promise_success() -> bool {
 }
 
 #[near_bindgen]
-impl RedBag {
+impl RedBagContract {
+
+    #[init]
+    pub fn new(
+        owner_id: AccountId,
+    ) -> Self {
+        assert!(!env::state_exists(), "Already initialized");
+
+        let mut this = Self {
+            owner_id,
+            pre_balance: env::account_balance(),
+            red_info: Map::new(),
+            sender_redbag: Map::new(),
+            receiver_redbag: Map::new(),
+        };
+
+        this
+    }
 
     ///  发红包功能
     #[payable]
@@ -116,49 +147,6 @@ impl RedBag {
             env::current_account_id(),
             b"create_account_and_claim,claim,revoke".to_vec(),
         )
-    }
-
-    fn claim_redbag(&mut self, pk: PublicKey, account_id: AccountId) -> Balance {
-        // 查看红包是否存在
-        let redbag = self.red_info.get(&pk);
-        assert!(redbag.is_some(), "No corresponding redbag found.");
-
-        // 查看红包剩余数量是否可被领取
-        let mut rb = &mut redbag.unwrap();
-        assert!(rb.claim_info.len() < rb.count as usize, 
-            "Sorry, the redbag has been claimed out.");
-        assert!(rb.remaining_balance != 0, 
-            "Sorry, the redbag has been revoked.");
-        assert!(rb.remaining_balance >= MIN_REDBAG_SHARE, 
-            "Sorry, the redbag has few value to be claimed.");
-        // 判断用户是否领取过
-        assert!(rb.claim_info.iter().filter(|x| x.user == account_id).count() == 0, 
-            "Sorry, you have claimed this redbag before.");
-        // 领取红包 如果是最后一个领取人，则拿走所有
-        let amount = if rb.claim_info.len() == rb.count as usize - 1 { 
-            rb.remaining_balance 
-        } else { 
-            if rb.mode == 1 {
-                self.random_amount(rb.remaining_balance)
-            } else {
-                self.even_amount(rb.balance.into(), rb.count)
-            }
-        };
-        
-        // 更新红包记录
-        rb.remaining_balance -= amount;
-        let ci = ClaimInfo {
-            user: account_id.clone(),
-            amount,
-        };
-        rb.claim_info.push(ci);
-        self.red_info.insert(&pk, &rb);
-        // 更新领取人记录
-        let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
-        receiver_record.push(pk.clone());
-        self.receiver_redbag.insert(&account_id, &receiver_record);
-        
-        amount
     }
 
     /// 创建新用户同时领取红包
@@ -246,37 +234,9 @@ impl RedBag {
         relation_vec.iter().map(|x| x.clone().try_into().unwrap()).collect()
     }
 
-    /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
-    fn random_amount(&self, total_amount: u128) -> u128 {
-        let u8_max_value: u128 = u8::max_value().into();
-        let min_share: u128 = total_amount / u8_max_value;
-
-        // 获取随机比率
-        let random_seed = env::random_seed();
-        let mut share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
-
-        // 限制过大或过小的比率在2%到60%之间
-        if share_rate < 5_u8 {
-            share_rate = 5;
-        } else if share_rate > 153 {
-            share_rate = 153;
-        }
-
-        let random_share = min_share.wrapping_mul(share_rate.into());
-        if random_share >= MIN_REDBAG_SHARE {
-            random_share
-        } else {
-            MIN_REDBAG_SHARE
-        }
-    }
-
-    fn even_amount(&self, total_amount: u128, count: u128) -> u128 {
-        let even_share = total_amount / count;
-        if even_share >= MIN_REDBAG_SHARE {
-            even_share
-        } else {
-            MIN_REDBAG_SHARE
-        }
+    /// Returns account ID of the contract owner.
+    pub fn get_owner_id(&self) -> AccountId {
+        self.owner_id.clone()
     }
 
     /// Returns the balance associated with given key.
@@ -286,6 +246,9 @@ impl RedBag {
         redbag_info.remaining_balance.into()
     }
 
+    /*************/
+    /* Callbacks */
+    /*************/
     /// callback after execution `create_account_and_claim`.
     pub fn on_account_created_and_claimed(&mut self, amount: U128) -> bool {
         assert_eq!(
@@ -305,6 +268,10 @@ impl RedBag {
         }
         creation_succeeded
     }
+
+    /*******************/
+    /* Owner's methods */
+    /*******************/
 }
 
 #[cfg(not(target_arch = "wasm32"))]
