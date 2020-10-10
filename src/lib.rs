@@ -204,6 +204,8 @@ impl RedBag {
             "Sorry, Only redbag owner can revoke.");
         assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
             "Sorry, the redbag has been claimed out.");
+        assert!(rb.remaining_balance != 0, 
+            "Sorry, the redbag has already been revoked.");
         // 红包剩余
         let amount: Balance = rb.remaining_balance;
         // 更新红包记录
