@@ -46,6 +46,13 @@ impl RedBagContract {
         amount
     }
 
+    /// in case of failure in create_account_and_claim, need return amount to redbag
+    pub(crate) fn return_redbag(&mut self, pk: PublicKey, amount: u128) {
+        let redbag = self.red_info.get(&pk);
+        assert!(redbag.is_some(), "No corresponding redbag found.");
+        let mut rb = &mut redbag.unwrap();
+    }
+
     /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
     pub(crate) fn random_amount(&self, total_amount: u128) -> u128 {
         let u8_max_value: u128 = u8::max_value().into();
@@ -78,5 +85,14 @@ impl RedBagContract {
         } else {
             MIN_REDBAG_SHARE
         }
+    }
+
+    /// Asserts that the method was called by the owner.
+    pub(crate) fn assert_owner(&self) {
+        assert_eq!(
+            env::predecessor_account_id(),
+            self.owner_id,
+            "Can only be called by the owner"
+        );
     }
 }

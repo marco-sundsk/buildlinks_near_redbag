@@ -273,6 +273,12 @@ impl RedBagContract {
     /*******************/
     /* Owner's methods */
     /*******************/
+    pub fn withdraw_profit(&mut self) {
+        self.assert_owner();
+        // TODO: caculate profit
+        let amount: Balance = MIN_REDBAG_SHARE;
+        Promise::new(self.owner_id).transfer(amount)
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
