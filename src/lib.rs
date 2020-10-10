@@ -264,7 +264,7 @@ impl RedBagContract {
         } else {
             // In case of failure, put the amount back.
             // 失败的情况下，回退资金及相关结构信息的更改 
-            self.return_redbag(&env::signer_account_pk(), &amount);
+            self.return_redbag(env::signer_account_pk(), amount.into());
         }
         creation_succeeded
     }
@@ -272,11 +272,11 @@ impl RedBagContract {
     /*******************/
     /* Owner's methods */
     /*******************/
-    pub fn withdraw_profit(&mut self) {
+    pub fn withdraw_profit(&mut self) -> Promise {
         self.assert_owner();
         // TODO: caculate profit
         let amount: Balance = MIN_REDBAG_SHARE;
-        Promise::new(self.owner_id).transfer(amount)
+        Promise::new(self.owner_id.clone()).transfer(amount)
     }
 }
 
