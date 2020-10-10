@@ -1,10 +1,11 @@
+use std::convert::TryInto;
+
 use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Map;
 use near_sdk::json_types::{Base58PublicKey, U128};
 use near_sdk::{
     env, ext_contract, near_bindgen, AccountId, Balance, Promise, PromiseResult, PublicKey,
 };
-use std::convert::TryInto;
 
 mod internal;
 
@@ -33,7 +34,7 @@ pub struct RedInfo {
 }
 
 #[near_bindgen]
-#[derive(Default, BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct RedBagContract {
     /// The account ID of the owner who's maintaining the contract.
     /// NOTE: This is different from the current account ID which is cur user of this contract.
@@ -95,12 +96,12 @@ impl RedBagContract {
     ) -> Self {
         assert!(!env::state_exists(), "Already initialized");
 
-        let mut this = Self {
+        let this = Self {
             owner_id,
             pre_balance: env::account_balance(),
-            red_info: Map::new(),
-            sender_redbag: Map::new(),
-            receiver_redbag: Map::new(),
+            red_info: Map::new(b"u".to_vec()),
+            sender_redbag: Map::new(b"u".to_vec()),
+            receiver_redbag: Map::new(b"u".to_vec()),
         };
 
         this
@@ -190,7 +191,7 @@ impl RedBagContract {
         let mut rb = &mut redbag.unwrap();
         assert!(rb.owner == account_id, 
             "Sorry, Only redbag owner can revoke.");
-        assert!(rb.claim_info.len() < rb.count.try_into().unwrap(), 
+        assert!(rb.claim_info.len() < rb.count as usize, 
             "Sorry, the redbag has been claimed out.");
         // 红包剩余
         let amount: Balance = rb.remaining_balance;
@@ -277,7 +278,6 @@ impl RedBagContract {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
 
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, BlockHeight, PublicKey, VMContext};
