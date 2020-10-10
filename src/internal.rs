@@ -51,6 +51,15 @@ impl RedBagContract {
         let redbag = self.red_info.get(&pk);
         assert!(redbag.is_some(), "No corresponding redbag found.");
         let mut rb = &mut redbag.unwrap();
+        let ci = rb.claim_info.pop();
+        rb.remaining_balance += ci.amount;
+        self.red_info.insert(&pk, &rb);
+
+        let wrap_records = self.receiver_redbag.get(&ci.account_id);
+        assert!(wrap_records.is_some(), "No receiver records found.");
+        let mut receiver_record = &mut wrap_records.unwrap();
+        receiver_record.pop();
+        self.receiver_redbag.insert(&ci.account_id, &receiver_record);
     }
 
     /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()

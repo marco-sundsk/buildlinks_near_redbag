@@ -258,14 +258,13 @@ impl RedBagContract {
             "Callback can only be called from the contract"
         );
         let creation_succeeded = is_promise_success();
-        if creation_succeeded {  // TODO: 红包逻辑中无需删除key, 但要补记相关信息
+        if creation_succeeded {  
             // Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
             assert_eq!(1, 1, "Nop");
         } else {
             // In case of failure, put the amount back.
-            // TODO: 失败的情况下，回退资金及相关结构信息的更改 
-            // self.accounts.insert(&env::signer_account_pk(), &amount.into());
-            assert_eq!(1, 1, "Nop");
+            // 失败的情况下，回退资金及相关结构信息的更改 
+            self.return_redbag(&env::signer_account_pk(), &amount);
         }
         creation_succeeded
     }
