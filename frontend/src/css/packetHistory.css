@@ -1,0 +1,172 @@
+.collectTop{
+    width:100%;
+    height:2.14rem;
+    background:url("../images/bj05.png") no-repeat center;
+    background-size: 100% 100%;
+}
+.collectTop h2{
+    font-size: .36rem;
+    font-family: 'SimHei';
+    color:#ffcd85;
+    line-height:1;
+    padding-top:.62rem;
+    text-align: center;
+}
+.moneyUsers{
+    font-size: 0;
+    padding-top:.16rem;
+    text-align:center;
+}
+.moneyUsers i,.moneyUsers span{
+    display: inline-block;
+    vertical-align: middle;
+}
+.moneyUsers i{
+    display: block;
+    width:1.75rem;
+    height:1.75rem;
+    border-radius:.1rem;
+    background:url("../images/head.png") no-repeat center;
+    background-size: cover;
+    margin:0 auto;
+}
+.totalNameWrap{
+    padding-top:.1rem;
+}
+.moneyUsers span{
+    font-size: .36rem;
+    line-height:.5rem;
+    color:#060606;
+}
+.moneyTitle{
+    font-size: .36rem;
+    line-height:.86rem;
+    color:#b7b7b7;
+    text-align:center;
+    padding-bottom:.35rem;
+}
+.moneyTitle span{
+    color:#ffcd85;
+}
+.moneyNumber{
+    font-size: 0;
+    text-align: center;
+    padding-top:.25rem;
+}
+.moneyNumber i,.moneyNumber span{
+    display: inline-block;
+    vertical-align: middle;
+}
+.moneyNumber span{
+    font-size: 1rem;
+    font-weight: bold;
+    line-height:1;
+    color:#060606;
+}
+.moneyNumber i{
+    width:.76rem;
+    height:.76rem;
+    background:url("../images/icon08.png") no-repeat center;
+    background-size:contain;
+    margin-left:.3rem;
+}
+
+.collectTotalListWrap{
+    border-top:.16rem solid #f3f3f3;
+    padding:0 .7rem;
+}
+.collectTotalListTop{
+    font-size: 0;
+}
+.collectTotalListTop button,.collectTotalListTop span{
+    display: inline-block;
+    vertical-align: middle;
+}
+.collectTotalListTop button{
+    width:.35rem;
+    height:.35rem;
+    border:1px solid #b7b7b7;
+    border-radius:100%;
+    margin-right:.1rem;
+}
+.collectTotalListTop button.on{
+    border-width:0;
+    background:url("../images/icon09.png") no-repeat center;
+    background-size: contain;
+}
+.collectTotalListTop span{
+    font-size: .3rem;
+    line-height: 1rem;
+    color:#b3b3b3;
+}
+.collectTotalList:after{clear:both; display:block; height:0; visibility:hidden; line-height:0; content:'\20';}
+.collectTotalList{
+    border-top:1px solid #e8e8e8;
+    /*height:1.5rem;*/
+}
+.collectTotalIcon{
+    width:.43rem;
+    height:.5rem;
+    background:url("../images/icon04.png") no-repeat center;
+    background-size: contain;
+    margin-top:.5rem;
+    float:left;
+}
+.collectTotalDetail{
+    float:left;
+    padding-top:.38rem;
+    max-width: 60%;
+}
+.collectTotalName{
+    font-size: .25rem;
+    line-height:.88rem;
+    color:#272f32;
+    word-break:keep-all;           /* 不换行 */
+    white-space:nowrap;          /* 不换行 */
+    overflow:hidden;               /* 内容超出宽度时隐藏超出部分的内容 */
+    text-overflow:ellipsis;
+}
+.collectTotalTime{
+    font-size: .24rem;
+    line-height:.48rem;
+    color:#b3b3b3;
+}
+.collectTotalManyWrap{
+    float:right;
+}
+.collectTotalManyTop{
+    height:.86rem;
+    padding-top:.36rem;
+    font-size: 0;
+}
+.collectTotalManyIcon{
+    display:inline-block;
+    width:.3rem;
+    height:.3rem;
+    background:url("../images/icon05.png") no-repeat center;
+    background-size: contain;
+    margin-top:.1rem;
+    float:right;
+}
+.collectTotalMany{
+    font-size: .32rem;
+    padding:0 .2rem;
+    line-height:.5rem;
+    color:#272f32;
+    float:right;
+}
+.collectTotalManyBottom{
+    font-size:0;
+    text-align: right;
+    padding-bottom:.4rem;
+}
+.collectTotalManyBottom span{
+    display:inline-block;
+    vertical-align: middle;
+    font-size: .24rem;
+    color:#b9b9b9;
+    line-height:.34rem;
+}
+.receiveDetailTxt{
+    padding-right:.1rem;
+}

@@ -1,0 +1,279 @@
+.wrap{
+    background-color:#ff2242;
+    position:relative;
+}
+.borderIconTop{
+    width:100%;
+    height:.8rem;
+    position:absolute;
+    left:0;top:0;right:0;
+    background:url("../images/top.png") no-repeat center;
+    background-size:contain;
+}
+.borderIconBottom{
+    width:100%;
+    height:.77rem;
+    position:absolute;
+    left:0;bottom:0;right:0;
+    background:url("../images/bot.png") no-repeat center;
+    background-size:contain;
+}
+.sendTopWrap{
+    width:100%;
+    height:3.94rem;
+    background:url("../images/bj3.png") no-repeat center top;
+    background-size:100% auto;
+}
+.userTitle{
+    font-size:.36rem;
+    line-height:1;
+    padding-top:.54rem;
+    text-align:center;
+    color:#ffcd85;
+    position:relative;
+}
+.userTitle button{
+    display:inline-block;
+    width:.3rem;
+    height:.3rem;
+    background:url("../images/icon06.png") no-repeat center;
+    background-size:contain;
+    position: absolute;
+    right:.46rem;bottom:.03rem;
+}
+.userMessage{
+    padding:.94rem .44rem 0 .54rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.usersList{
+    font-size:0;
+    max-width: 60%;
+}
+.userImg{
+    width:.96rem;
+    height:.98rem;
+    border-radius:.1rem;
+    background:url("../images/user.png") no-repeat center;
+    background-size:cover;
+}
+.userName{
+    font-size:.3rem;
+    color:#fff;
+    font-weight:bold;
+    padding-left:.2rem;
+    word-break:keep-all;           /* 不换行 */
+    white-space:nowrap;          /* 不换行 */
+    overflow:hidden;               /* 内容超出宽度时隐藏超出部分的内容 */
+    text-overflow:ellipsis;
+    max-width: calc(100% - .96rem);
+}
+.userBalance{
+    height:.68rem;
+    padding:0 .36rem 0 .42rem;
+    border-radius:.34rem;
+    background-color:#ffcd85;
+    font-size:0;
+}
+.userBalance span,.userBalance i,.userImg,.userName{
+    display:inline-block;
+    vertical-align: middle;
+}
+.userBalance span{
+    font-size:.24rem;
+    line-height:.68rem;
+    color:#464646;
+}
+.userBalance i{
+    width:.24rem;
+    height:.25rem;
+    background:url("../images/icon01.png") no-repeat center;
+    background-size: contain;
+    margin-left:.2rem;
+}
+.sendCenterWrap{
+    width:100%;
+    padding:.22rem .46rem 0;
+    font-family: "Microsoft YaHei";
+}
+.amountList{
+    width:100%;
+    height:1.12rem;
+    border-radius:.1rem;
+    background-color:#fff;
+    margin-top:.28rem;
+    padding:0 .44rem;
+    position:relative;
+}
+.amountInput{
+    max-width:4rem;
+    float:right;
+    display:inline-block;
+    font-size:0;
+    padding-right:.86rem;
+}
+.amountInput input{
+    display:inline-block;
+    max-width:100%;
+    font-size:.34rem;
+    line-height:1.12rem;
+    text-align:right;
+}
+.amountText{
+    max-width:none;
+    float: none;
+    display:block;
+    padding-right:0;
+}
+.amountText input{
+    text-align:left;
+}
+.amountIconPin{
+    float:left;
+    padding-top:.39rem;
+    padding-right:.1rem;
+    font-size:0;
+}
+.amountIconPin i{
+    display:inline-block;
+    width:.34rem;
+    height:.34rem;
+    background: url("../images/icon07.png") no-repeat center;
+    background-size: contain;
+}
+.amountName{
+    display:inline-block;
+    float:left;
+    font-size: .34rem;
+    line-height:1.12rem;
+    color:#060606;
+    white-space: nowrap;
+}
+.amountIcon{
+    position:absolute;
+    right:.44rem;
+    top:50%;
+    margin-top:-.22rem;
+    font-size:0;
+}
+.amountIcon i{
+    display:inline-block;
+    width:.33rem;
+    height:.34rem;
+    background:url("../images/icon02.png") no-repeat center;
+    background-size:contain;
+}
+.amountIcon span{
+    font-size:.34rem;
+    color:#060606;
+}
+.amountChange{
+    font-size:.26rem;
+    line-height:.5rem;
+    color:#fff;
+    padding:0 .3rem;
+}
+.amountChange span{
+    color:#ffd966;
+}
+
+.sendBottomWrap{
+    /*position:absolute;*/
+    /*left:0;bottom:.76rem;right:0;*/
+    padding-top:.6rem;
+}
+.totalWrap{
+    font-size:0;
+    text-align:center;
+    padding-bottom:.8rem;
+}
+.totalWrap span,.totalWrap i{
+    display:inline-block;
+    vertical-align: middle;
+}
+.totalWrap span{
+    font-size:.72rem;
+    line-height:1;
+    font-weight:bold;
+    color:#ffd072;
+}
+.totalWrap i{
+    width:.67rem;
+    height:.66rem;
+    background:url("../images/icon03.png") no-repeat center;
+    background-size:contain;
+    margin-left:.4rem;
+}
+.totalSubmitBtn{
+    display:block;
+    width:5.74rem;
+    height:1rem;
+    border-radius: .5rem;
+    background-color:#ffcd85;
+    font-size:.36rem;
+    color:#060606;
+    margin:0 auto;
+}
+.packetHistoryBtn{
+    display: block;
+    font-size: .28rem;
+    line-height:.7rem;
+    color:#f7d693;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.layerCopyUrlWrap{
+    position: absolute;
+    left:0;top:0;right:0;bottom:0;
+    background-color:rgba(0,0,0,.5);
+    display: none;
+}
+.layerCopyUrlBox{
+    width:7.3rem;
+    height:9.6rem;
+    position: absolute;
+    left:50%;top:50%;
+    margin-left:-3.65rem;
+    margin-top:-4.8rem;
+    background: url("../images/lay.png") no-repeat center;
+    background-size: contain;
+}
+.layerCopyUrlTxt{
+    width:3.47rem;
+    height:1.57rem;
+    margin:2.83rem auto 0;
+    padding-bottom:.12rem;
+}
+#copyUrlTxt{
+    width:100%;
+    /*height:100%;*/
+    /*height:1.32rem;*/
+    padding:.18rem .3rem 0;
+    font-size: .16rem;
+    font-family: 'SimHei';
+    line-height:.24rem;
+    color:#555;
+}
+.layerCopyUrlBtn{
+    width:3.97rem;
+    height:.81rem;
+    margin:2.25rem auto 0;
+    font-size: 0;
+}
+.layerCopyUrlBtn button{
+    display: inline-block;
+    width:100%;
+    height:100%;
+}
+.closeBtn{
+    width:.5rem;
+    height:.5rem;
+    background:url("../images/close.png") no-repeat center;
+    background-size: contain;
+    position: absolute;
+    right:.4rem;
+    top:-.5rem;
+    opacity: .7;
+}

@@ -1,0 +1,64 @@
+.wrap{
+    background: url("../images/bj2.png") no-repeat center top;
+    background-size: 100% auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.content{
+    width:100%;
+    padding:0 .3rem;
+}
+.resTopTxt{
+    font-size:.48rem;
+    line-height:1.36rem;
+    padding-bottom:.3rem;
+    padding-left:.3rem;
+    color:#fff;
+    font-weight:lighter;
+}
+.editorWrap{
+    padding:.76rem .56rem;
+    background-color:#fff;
+    border-radius:.4rem;
+    box-shadow:.05rem .1rem .2rem rgba(211,69,82,.1);
+}
+.editorList{
+    height:1.5rem;
+    border-bottom:1px solid #ddd;
+    padding:.38rem .2rem 0;
+    position:relative;
+}
+.editorList input{
+    display:block;
+    font-size:.28rem;
+    line-height:1.1rem;
+}
+.vCodeBtn{
+    font-size:.28rem;
+    color:#ff8c6f;
+    line-height:1.1rem;
+    position:absolute;
+    right:.1rem;bottom:0;
+
+}
+.buttons{
+    padding-top:.86rem;
+}
+.buttons button{
+    display:inline-block;
+    width:5.74rem;
+    height:1rem;
+    border-radius:.5rem;
+    font-size:.36rem;
+}
+.buttons button.registerBtn{
+    background-color:#ff8c6f;
+    background: linear-gradient(to right, #ff2242 0%,#ff4b4b 100%);
+    color:#fff;
+}
+.buttons button.cancelBtn{
+    border:1px solid #ddd;
+    color:#666;
+    margin-top:.4rem;
+}
