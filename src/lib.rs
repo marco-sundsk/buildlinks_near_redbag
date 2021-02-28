@@ -228,12 +228,14 @@ impl RedBag {
     }
 
     /// 领取红包
-    pub fn claim(&mut self, account_id: AccountId) -> Promise {
+    pub fn claim(&mut self, account_id: AccountId) -> U128 {
         let pk = env::signer_account_pk();
 
         let amount = self.claim_redbag(pk.clone(), account_id.clone());
 
-        Promise::new(account_id).transfer(amount)
+        Promise::new(account_id).transfer(amount);
+
+        amount.into()
     }
 
     /// 红包所有人撤回对应public_key的红包剩余金额

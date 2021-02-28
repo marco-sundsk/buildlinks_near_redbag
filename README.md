@@ -52,13 +52,6 @@ srouce ./build.sh
 ```shell
 # deploy it
 near deploy rb01.testnet res/redbag2.wasm --account_id=rb01.testnet
-
-# say it was deploy at $CONTRACTID, then init it 
-near call $CONTRACTID new \
-  '{"owner_id": "boss.testnet", "dice_number": 1, 
-  "rolling_fee": "1000000000000000000000000", 
-  "reward_fee_fraction": {"numerator": 5, "denominator": 100}}' \
-  --account_id=$CONTRACTID
 ```
 
 
@@ -67,7 +60,17 @@ Contract Interface
 
 ### Data Structure
 ```rust
-/// detail info about a redbag used for return 
+/// one claim info used in HumanReadableRedDetail
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableClaimInfo {
+    pub user: AccountId,
+    pub amount: U128,
+    pub height: U64,
+    pub ts: U64,
+}
+
+/// detail info about a redbag used for return in view functions 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRedDetail {
@@ -81,7 +84,7 @@ pub struct HumanReadableRedDetail {
     pub claim_info: Vec<HumanReadableClaimInfo>,
 }
 
-// brief info about a redbag used for return
+// brief info about a redbag used for return in view functions
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRedBrief {
@@ -96,7 +99,7 @@ pub struct HumanReadableRedBrief {
     pub ts: U64,
 }
 
-// Brief of recv info for a receiver
+// Brief of one's recv info used for return in view functions
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRecvBrief {
@@ -110,19 +113,24 @@ pub struct HumanReadableRecvBrief {
 ### Send Claim and Revoke Redbag
 ```rust
 /// 发红包功能
+/// Generate a redbag
 #[payable]
 pub fn send_redbag(&mut self, public_key: Base58PublicKey,
     count: u8, mode: u8, slogan: String,) -> Promise;
 
 /// 创建新用户同时领取红包
+/// Interface of a funding contract that invoked by a web wallet,
+/// just in the case, the amount of funding is the redbag he received.
 pub fn create_account_and_claim(&mut self, new_account_id: AccountId,
     new_public_key: Base58PublicKey,) -> Promise;
 
-/// 领取红包
-pub fn claim(&mut self, account_id: AccountId) -> Promise;
+/// 老用户领取红包
+/// User claims his redbag using an already exist near account
+pub fn claim(&mut self, account_id: AccountId) -> U128;
 
 /// 红包所有人撤回对应public_key的红包剩余金额
 /// 撤回视为自己领取剩余金额
+/// The owner revoked a redbag which hasn't been thoroughly claimed out.
 pub fn revoke(&mut self, public_key: Base58PublicKey) -> Promise;
 ```
 
