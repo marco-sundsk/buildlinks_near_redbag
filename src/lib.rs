@@ -85,6 +85,7 @@ pub struct HumanReadableRedDetail {
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRedBrief {
     pub owner: AccountId,
+    pub id: Base58PublicKey,
     pub mode: u8,
     pub count: u8,
     pub balance: U128,
@@ -320,6 +321,14 @@ impl RedBag {
             .collect()
     }
 
+    pub fn show_send_list(&self, account_id: AccountId) -> Vec<HumanReadableRedBrief> {
+        let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
+        relation_vec
+            .iter()
+            .map(|x| self.redbag_brief(x))
+            .collect()
+    }
+
     pub fn show_recv(&self, account_id: AccountId) -> Vec<Base58PublicKey> {
         let relation_vec = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
         relation_vec
@@ -330,20 +339,9 @@ impl RedBag {
 
     /// Returns the redbag brief associated with given key.
     /// 看某个红包的简介
-    pub fn show_redbag_brief(&self, key: Base58PublicKey) -> HumanReadableRedBrief {
-        let pk = key.into();
-        let redbag_info = self.red_info.get(&pk).unwrap();
-
-        HumanReadableRedBrief {
-            owner: redbag_info.owner,
-            mode: redbag_info.mode,
-            count: redbag_info.count,
-            balance: redbag_info.balance.into(),
-            remaining_balance: redbag_info.remaining_balance.into(),
-            received_count: redbag_info.claim_info.len() as u8,
-            height: redbag_info.height.into(),
-            ts: redbag_info.ts.into(),
-        }
+    pub fn show_redbag_brief(&self, public_key: Base58PublicKey) -> HumanReadableRedBrief {
+        let pk = public_key.into();
+        self.redbag_brief(&pk)
     }
 
     /************************/
@@ -478,6 +476,21 @@ impl RedBag {
             amount: claiminfo.amount.into(),
             height: claiminfo.height.into(),
             ts: claiminfo.ts.into(),
+        }
+    }
+
+    fn redbag_brief(&self, pk: &PublicKey) -> HumanReadableRedBrief {
+        let redbag_info = self.red_info.get(pk).unwrap();
+        HumanReadableRedBrief {
+            owner: redbag_info.owner,
+            id: (*pk).clone().try_into().unwrap(),
+            mode: redbag_info.mode,
+            count: redbag_info.count,
+            balance: redbag_info.balance.into(),
+            remaining_balance: redbag_info.remaining_balance.into(),
+            received_count: redbag_info.claim_info.len() as u8,
+            height: redbag_info.height.into(),
+            ts: redbag_info.ts.into(),
         }
     }
 }

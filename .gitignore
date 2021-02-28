@@ -85,3 +85,6 @@ Cargo.lock
 **/*.rs.bk
 
 .idea/
+
+accounts/
+res/*.wasm

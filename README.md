@@ -2,6 +2,65 @@
 
 BuildlinksRedbag4Near contract allows any user to create a redbag that their online group friends can grab to claim tokens even if they don't have an account yet.
 
+
+
+Play with this contract
+========================
+the contract is deployed at testnet with the name `rb01.testnet`
+
+you can set it to env for later use:
+```shell
+export CONTRACTID=rb01.testnet
+```
+
+## Look around
+```shell
+# 
+near view $CONTRACTID show_redbag_brief '{"public_key": "xxxxxxxxxxx"}'
+# 
+near view $CONTRACTID show_redbag_detail '{"public_key": "xxxxxxxxxxx"}'
+# 
+near view $CONTRACTID show_send '{"account_id": "humeng.testnet"}'
+# 
+near view $CONTRACTID show_recv '{"account_id": "xxxxxxxxxxx"}'
+```
+## Let's play
+```shell
+# attached 5 Near
+near call $CONTRACTID send_redbag '{"public_key": "xxxx", "count": 2, "mode": 1, "slogan": "aaa"}' --amount=5 --account_id=humeng.testnet
+# 
+near call $CONTRACTID create_account_and_claim '{"new_account_id": "", "new_public_key": ""}' --account_id=alice.testnet
+
+near call $CONTRACTID claim '{"account_id": ""}' --account_id=alice.testnet
+
+near call $CONTRACTID revoke '{"public_key": "aaaaaaa"}' --account_id=alice.testnet
+```
+
+Build Deploy and Init
+======================
+
+Before you compile this code, you will need to install Rust with [correct target]
+
+
+```shell
+# building it
+srouce ./build.sh
+```
+
+```shell
+# deploy it
+near deploy rb01.testnet res/redbag2.wasm --account_id=rb01.testnet
+
+# say it was deploy at $CONTRACTID, then init it 
+near call $CONTRACTID new \
+  '{"owner_id": "boss.testnet", "dice_number": 1, 
+  "rolling_fee": "1000000000000000000000000", 
+  "reward_fee_fraction": {"numerator": 5, "denominator": 100}}' \
+  --account_id=$CONTRACTID
+```
+
+
+
 The way it works:
 
 Sender, that has NEAR:
