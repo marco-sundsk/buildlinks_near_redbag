@@ -7,6 +7,7 @@ use near_sdk::{
     env, ext_contract, near_bindgen, AccountId, Balance, BlockHeight, Gas, Promise, PromiseResult,
     PublicKey,
 };
+use std::collections::HashSet;
 use uint::construct_uint;
 
 construct_uint! {
@@ -91,6 +92,16 @@ pub struct HumanReadableRedBrief {
     pub balance: U128,
     pub remaining_balance: U128,
     pub received_count: u8,
+    pub height: U64,
+    pub ts: U64,
+}
+
+// Brief of recv info for a receiver
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableRecvBrief {
+    pub id: Base58PublicKey,
+    pub balance: U128,
     pub height: U64,
     pub ts: U64,
 }
@@ -290,6 +301,7 @@ impl RedBag {
             rb.owner, rb.count, rb.balance, rb.remaining_balance, rb.mode, rb.slogan, recvs_json)
     }
 
+    /// 看某个红包的详情
     pub fn show_redbag_detail(&self, public_key: Base58PublicKey) ->  HumanReadableRedDetail {
         let pk = public_key.into();
         // 查看红包是否存在
@@ -312,7 +324,7 @@ impl RedBag {
         }
     }
 
-    /// 查询用户所发的所有红包
+    /// obsolete
     pub fn show_send(&self, account_id: AccountId) -> Vec<Base58PublicKey> {
         let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
         relation_vec
@@ -321,6 +333,7 @@ impl RedBag {
             .collect()
     }
 
+    /// 查询用户所发的所有红包
     pub fn show_send_list(&self, account_id: AccountId) -> Vec<HumanReadableRedBrief> {
         let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
         relation_vec
@@ -329,6 +342,7 @@ impl RedBag {
             .collect()
     }
 
+    // obsolete
     pub fn show_recv(&self, account_id: AccountId) -> Vec<Base58PublicKey> {
         let relation_vec = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
         relation_vec
@@ -337,8 +351,27 @@ impl RedBag {
             .collect()
     }
 
-    /// Returns the redbag brief associated with given key.
-    /// 看某个红包的简介
+    // 查询用户抢到的所有红包
+    pub fn show_recv_list(&self, account_id: AccountId) -> Vec<HumanReadableRecvBrief> {
+        let relation_vec = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
+
+        // using set to remove duplicate id
+        let a: HashSet<_> = relation_vec.into_iter().collect();
+
+        let mut ret: Vec<HumanReadableRecvBrief> = Vec::new();
+        for id in a.iter() {
+            let redbag = self.red_info.get(id).unwrap();
+            for ci in &redbag.claim_info {
+                if ci.user == account_id {
+                    ret.push(self.recv_brief(id, ci));
+                }
+            }
+        }
+
+        ret
+    }
+
+    /// obsolete
     pub fn show_redbag_brief(&self, public_key: Base58PublicKey) -> HumanReadableRedBrief {
         let pk = public_key.into();
         self.redbag_brief(&pk)
@@ -491,6 +524,15 @@ impl RedBag {
             received_count: redbag_info.claim_info.len() as u8,
             height: redbag_info.height.into(),
             ts: redbag_info.ts.into(),
+        }
+    }
+
+    fn recv_brief(&self, pk: &PublicKey, claim: &ClaimInfo) -> HumanReadableRecvBrief {
+        HumanReadableRecvBrief {
+            id: pk.clone().try_into().unwrap(),
+            balance: claim.amount.into(),
+            height: claim.height.into(),
+            ts: claim.ts.into(),
         }
     }
 }
