@@ -51,7 +51,7 @@ srouce ./build.sh
 
 ```shell
 # deploy it
-near deploy rb01.testnet res/redbag2.wasm --account_id=rb01.testnet
+near deploy rb01.testnet res/redbag.wasm --account_id=rb01.testnet
 ```
 
 
