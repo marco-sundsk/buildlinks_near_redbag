@@ -21,8 +21,10 @@ near view $CONTRACTID show_redbag_brief '{"public_key": "xxxxxxxxxxx"}'
 near view $CONTRACTID show_redbag_detail '{"public_key": "xxxxxxxxxxx"}'
 # 
 near view $CONTRACTID show_send '{"account_id": "humeng.testnet"}'
+near view $CONTRACTID show_send_list '{"account_id": "humeng.testnet"}'
 # 
 near view $CONTRACTID show_recv '{"account_id": "xxxxxxxxxxx"}'
+near view $CONTRACTID show_recv_list '{"account_id": "xxxxxx"}'
 ```
 ## Let's play
 ```shell
@@ -59,6 +61,81 @@ near call $CONTRACTID new \
   --account_id=$CONTRACTID
 ```
 
+
+Contract Interface
+==================
+
+### Data Structure
+```rust
+/// detail info about a redbag used for return 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableRedDetail {
+    pub owner: AccountId,
+    pub mode: u8,
+    pub count: u8,
+    pub balance: U128,
+    pub remaining_balance: U128,
+    pub height: U64,
+    pub ts: U64,
+    pub claim_info: Vec<HumanReadableClaimInfo>,
+}
+
+// brief info about a redbag used for return
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableRedBrief {
+    pub owner: AccountId,
+    pub id: Base58PublicKey,
+    pub mode: u8,
+    pub count: u8,
+    pub balance: U128,
+    pub remaining_balance: U128,
+    pub received_count: u8,
+    pub height: U64,
+    pub ts: U64,
+}
+
+// Brief of recv info for a receiver
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableRecvBrief {
+    pub id: Base58PublicKey,
+    pub balance: U128,
+    pub height: U64,
+    pub ts: U64,
+}
+```
+
+### Send Claim and Revoke Redbag
+```rust
+/// 发红包功能
+#[payable]
+pub fn send_redbag(&mut self, public_key: Base58PublicKey,
+    count: u8, mode: u8, slogan: String,) -> Promise;
+
+/// 创建新用户同时领取红包
+pub fn create_account_and_claim(&mut self, new_account_id: AccountId,
+    new_public_key: Base58PublicKey,) -> Promise;
+
+/// 领取红包
+pub fn claim(&mut self, account_id: AccountId) -> Promise;
+
+/// 红包所有人撤回对应public_key的红包剩余金额
+/// 撤回视为自己领取剩余金额
+pub fn revoke(&mut self, public_key: Base58PublicKey) -> Promise;
+```
+
+### View interfaces
+```rust
+pub fn show_send_list(&self, account_id: AccountId) -> Vec<HumanReadableRedBrief>;
+
+pub fn show_recv_list(&self, account_id: AccountId) -> Vec<HumanReadableRecvBrief>;
+
+pub fn show_redbag_brief(&self, public_key: Base58PublicKey) -> HumanReadableRedBrief;
+
+pub fn show_redbag_detail(&self, public_key: Base58PublicKey) ->  HumanReadableRedDetail;
+```
 
 
 The way it works:
