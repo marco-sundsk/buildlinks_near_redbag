@@ -35,7 +35,7 @@ pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: Gas = 20_000_000_000_000;
 const NO_DEPOSIT: Balance = 0;
 
 /// one claim info
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Clone)]
 pub struct ClaimInfo {
     pub user: AccountId, // 领取者账户
     pub amount: Balance, // 领取到的红包价值
@@ -121,6 +121,9 @@ pub struct RedBag {
 pub trait ExtRedBag {
     /// Callback after creating account and claiming redbag.
     fn on_account_created_and_claimed(&mut self, amount: U128) -> bool;
+    fn on_account_created_and_claimed_ex(&mut self, 
+        pk: Base58PublicKey, account_id: AccountId, 
+        height: U64, amount: U128) -> bool;
 }
 
 fn is_promise_success() -> bool {
@@ -215,11 +218,24 @@ impl RedBag {
         let pk = env::signer_account_pk();
         let amount = self.claim_redbag(pk.clone(), new_account_id.clone());
 
-        Promise::new(new_account_id)
+        // Promise::new(new_account_id)
+        //     .create_account()
+        //     .add_full_access_key(new_public_key.into())
+        //     .transfer(amount)
+        //     .then(ext_self::on_account_created_and_claimed(
+        //         amount.into(),
+        //         &env::current_account_id(),
+        //         NO_DEPOSIT,
+        //         ON_CREATE_ACCOUNT_CALLBACK_GAS,
+        //     ))
+        Promise::new(new_account_id.clone())
             .create_account()
             .add_full_access_key(new_public_key.into())
             .transfer(amount)
-            .then(ext_self::on_account_created_and_claimed(
+            .then(ext_self::on_account_created_and_claimed_ex(
+                pk.try_into().unwrap(),
+                new_account_id,
+                env::block_index().into(),
                 amount.into(),
                 &env::current_account_id(),
                 NO_DEPOSIT,
@@ -411,6 +427,36 @@ impl RedBag {
         creation_succeeded
     }
 
+    pub fn on_account_created_and_claimed_ex(&mut self, 
+        pk: Base58PublicKey, account_id: AccountId, 
+        height: U64, amount: U128) -> bool {
+            assert_eq!(
+                env::predecessor_account_id(),
+                env::current_account_id(),
+                "Callback can only be called from the contract"
+            );
+            let creation_ret = is_promise_success();
+            if creation_ret {
+                // Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
+                assert_eq!(1, 1, "Nop");
+            } else {
+                // In case of failure, put the amount back.
+                // TODO: 失败的情况下，回退资金及相关结构信息的更改
+                // self.accounts.insert(&env::signer_account_pk(), &amount.into());
+                let amount: Balance = amount.into();
+                let remove_ret = self.remove_recv(pk.into(), account_id, height.into(), amount);
+                env::log(
+                    format!(
+                        "Create account and claim failed! Redbag info rolled back: {}",
+                        remove_ret
+                    )
+                    .as_bytes(),
+                );
+                
+            }
+            creation_ret
+        }
+
     /************************/
     /* internal functions   */
     /************************/
@@ -469,6 +515,40 @@ impl RedBag {
         receiver_record.push(pk.clone());
         self.receiver_redbag.insert(&account_id, &receiver_record);
         amount
+    }
+
+    /// Redbag receiver may encounter errors that 
+    /// may cause the create_account_and_claim fail, 
+    /// in this case, the claim_info vec in red_info 
+    /// and receiver_redbag map need to be rolled back.
+    fn remove_recv(&mut self, pk: PublicKey, account_id: AccountId, 
+        height: u64, amount: Balance) -> bool {
+
+        // handle roll back of red_info
+        let redbag = self.red_info.get(&pk);
+        if redbag.is_none() {
+            return false;
+        }
+        let mut rb = &mut redbag.unwrap();
+        let new_claim_info: Vec<ClaimInfo> = rb.claim_info
+            .iter().filter(|x| x.user != account_id 
+                || x.height != height 
+                || x.amount != amount)
+            .map(|x| x.clone()).collect();
+        rb.claim_info = new_claim_info;
+        self.red_info.insert(&pk, &rb);
+        
+        // handle roll back of receiver_redbag
+        let receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
+        let new_recv_record: Vec<PublicKey> = receiver_record
+            .iter().filter(|x| **x != pk).map(|x| x.clone()).collect();
+        if receiver_record.len() > 0 {
+            self.receiver_redbag.insert(&account_id, &new_recv_record);
+        } else {
+            self.receiver_redbag.remove(&account_id);
+        }
+        
+        true
     }
 
     /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
