@@ -494,9 +494,9 @@ impl RedBag {
             rb.remaining_balance
         } else {
             if rb.mode == 1 {
-                self.random_amount(rb.remaining_balance)
+                self.random_amount(&rb)
             } else {
-                self.even_amount(rb.balance.into(), rb.count)
+                self.even_amount(&rb)
             }
         };
         // 更新红包记录
@@ -553,23 +553,28 @@ impl RedBag {
     }
 
     /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
-    fn random_amount(&self, total_amount: u128) -> u128 {
-        // todo:
-        let u8_max_value: u128 = u8::max_value().into();
-        let min_share: u128 = total_amount / u8_max_value;
+    fn random_amount(&self, rb: &RedInfo) -> u128 {
 
-        // 获取随机比率
-        let random_seed = env::random_seed();
-        let mut share_rate: u8 = random_seed.iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
+        // figure out standard share
+        // then got random scope is [standard/2, standard*3/2]
+        let standard = rb.remaining_balance / (rb.count as usize - rb.claim_info.len()) as u128;
+        let left_bound = standard / 2;
+        let right_bound = standard * 3 / 2;
 
-        // 限制过大或过小的比率在2%到60%之间
-        if share_rate < 5_u8 {
-            share_rate = 5;
-        } else if share_rate > 153 {
-            share_rate = 153;
-        }
+        // got random in scope
+        let random_u8: u8 = env::random_seed().iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
+        let offset = (right_bound - left_bound) * random_u8 as u128 / 0x100_u128;
 
-        let random_share = min_share.wrapping_mul(share_rate.into());
+        env::log(
+            format!(
+                "Create random {} in scope [{}, {}]",
+                offset, left_bound, right_bound
+            )
+            .as_bytes(),
+        );
+
+        // keep random_share illegal 
+        let random_share = left_bound + offset;
         if random_share >= MIN_REDBAG_SHARE {
             random_share
         } else {
@@ -577,8 +582,8 @@ impl RedBag {
         }
     }
 
-    fn even_amount(&self, total_amount: u128, count: u8) -> u128 {
-        let even_share = total_amount / count as u128;
+    fn even_amount(&self, rb: &RedInfo) -> u128 {
+        let even_share = rb.balance / rb.count as u128;
         if even_share >= MIN_REDBAG_SHARE {
             even_share
         } else {
