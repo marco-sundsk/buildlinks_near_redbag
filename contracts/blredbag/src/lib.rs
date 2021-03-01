@@ -530,6 +530,7 @@ impl RedBag {
             return false;
         }
         let mut rb = &mut redbag.unwrap();
+        rb.remaining_balance += amount;
         let new_claim_info: Vec<ClaimInfo> = rb.claim_info
             .iter().filter(|x| x.user != account_id 
                 || x.height != height 
