@@ -300,6 +300,13 @@ impl RedBag {
     /* view functions       */
     /************************/
 
+    /// Returns the balance associated with given key.
+    pub fn get_key_balance(&self, key: Base58PublicKey) -> U128 {
+        self.red_info.get(&key.into()).expect("Key is missing")
+            .remaining_balance
+            .into()
+    }
+
     /// obsolete
     pub fn show_redbag(&self, public_key: Base58PublicKey) -> String {
         let pk = public_key.into();
