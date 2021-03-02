@@ -176,12 +176,19 @@ impl RedBag {
         );
 
         // make sure slogan would NOT be too long
-        let short_slogan;
-        if slogan.len() > 32 {
-            short_slogan = &slogan[..32];
+        let short_slogan: String;
+        let slogan_vec = slogan.chars().collect::<Vec<_>>();
+        if slogan_vec.len() > 32 {
+            short_slogan = slogan_vec[..32].iter().cloned().collect::<String>();
         } else {
-            short_slogan = &slogan[..];
+            short_slogan = slogan_vec[..].iter().cloned().collect::<String>();
         }
+        // let short_slogan;
+        // if slogan.len() > 32 {
+        //     short_slogan = &slogan[..32];
+        // } else {
+        //     short_slogan = &slogan[..];
+        // }
 
         // 初始化红包信息并记录
         let new_red_info = RedInfo {
@@ -477,7 +484,7 @@ impl RedBag {
 
         // 查看红包剩余数量是否可被领取
         let mut rb = &mut redbag.unwrap();
-        
+
         // 判断用户是否领取过
         assert!(
             rb.claim_info
