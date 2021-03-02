@@ -72,6 +72,7 @@ pub struct RedInfo {
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRedDetail {
     pub owner: AccountId,
+    pub slogan: String,
     pub mode: u8,
     pub count: u8,
     pub balance: U128,
@@ -339,6 +340,7 @@ impl RedBag {
 
         HumanReadableRedDetail {
             owner: redbag_info.owner.clone(),
+            slogan: redbag_info.slogan.clone(),
             mode: redbag_info.mode,
             count: redbag_info.count,
             balance: redbag_info.balance.into(),
@@ -475,6 +477,17 @@ impl RedBag {
 
         // 查看红包剩余数量是否可被领取
         let mut rb = &mut redbag.unwrap();
+        
+        // 判断用户是否领取过
+        assert!(
+            rb.claim_info
+                .iter()
+                .filter(|x| x.user == account_id)
+                .count()
+                == 0,
+            "Sorry, you have claimed this redbag before."
+        );
+        
         assert!(
             rb.claim_info.len() < rb.count as usize,
             "Sorry, the redbag has been claimed out."
@@ -487,15 +500,7 @@ impl RedBag {
             rb.remaining_balance >= MIN_REDBAG_SHARE,
             "Sorry, the redbag has few value to be claimed."
         );
-        // 判断用户是否领取过
-        assert!(
-            rb.claim_info
-                .iter()
-                .filter(|x| x.user == account_id)
-                .count()
-                == 0,
-            "Sorry, you have claimed this redbag before."
-        );
+        
         // 领取红包 如果是最后一个领取人，则拿走所有
         let amount = if rb.claim_info.len() == rb.count as usize - 1 {
             rb.remaining_balance
