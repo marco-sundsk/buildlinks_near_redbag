@@ -1,0 +1,190 @@
+<!--
+ * @Author: your name
+ * @Date: 2021-02-26 13:53:52
+ * @LastEditTime: 2021-03-02 19:38:48
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
+-->
+<template>
+  <div>
+    <div class="loading" v-if="loading"></div>
+    <div v-else>
+      <div class="near-balance">
+        <div class="near-balance-title">余额</div>
+        <div class="near-balance-funds">{{nearTotal | changeNear}} <small>Ⓝ</small></div>
+        <div class="near-balance-actions">
+          <button class="btn btn-primary" @click="showSendRedBag">+ 点击创建红包</button>
+        </div>
+      </div>
+      <div class="near-tabs">
+        <ul class="tab">
+          <li class='tab-item' :class="{active: isActive === 'active'}" @click="changeActive('active')">发送</li>
+          <li class='tab-item' :class="{active: isActive === 'claimed'}" @click="changeActive('claimed')">接收</li>
+        </ul>
+      </div>
+    <div>
+      <div v-if="isActive === 'active'" class="near-drops">
+          <div v-if="activeList.length > 0" class="drop">
+              <div class="near-drop-item" v-for="(item, index) in activeList" :key="index" @click.stop="showRedbagInfo(item)">
+                  <div class="drop-item-funds">
+                    {{(item.balance - item.remaining_balance) | changeNear}} / {{item.balance | changeNear}}<small>Ⓝ</small>
+                    <span>{{item.received_count}}/{{item.count}} <small>个</small></span>
+                  </div>
+                  <div class="drop-item-status">{{redbagState(item)}}</div>
+                  <div class="drop-item-pubkey text-ellipsis text-gray">发送时间: {{item.ts | changeTime}}</div>
+                  <button class="btn btn-sm btn-primary" @click.stop="showUrlInfo(item.id)">发红包</button>
+                  <button v-if="Number(item.remaining_balance) !== 0" class="btn btn-sm btn-link" @click.stop="revoke(item.id)">撤回</button>
+              </div>
+          </div>
+          <div v-else class="empty">
+              <div class="empty-icon">🧧</div>
+              <p class="empty-title h5">无红包记录</p>
+              <p class="empty-subtitle">点击上方红色按钮创建红包</p>
+          </div>
+      </div>
+    </div>
+      <div v-if="isActive === 'claimed'">
+        <div class="drop" v-if="claimedList.length > 0">
+            <div class="near-drop-item" v-for="(item, index) in claimedList" :key="index" @click.stop="showRedbagInfo(item)">
+                <div class="drop-item-funds">{{item.balance | changeNear}} <small>Ⓝ</small></div>
+                <!-- <div class="drop-item-status"></div> -->
+                <div class="drop-item-pubkey text-ellipsis text-gray">领取时间: {{item.ts | changeTime}}</div>
+            </div>
+        </div>
+        <div v-else class="empty">
+            <div class="empty-icon">🧧</div>
+            <p class="empty-title h5">无红包记录</p>
+            <p class="empty-subtitle">点击上方红色按钮创建红包</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data () {
+    return {
+      loading: true,
+      isActive: 'active',
+      activeList: [],
+      claimedList: [],
+      nearTotal: ''
+    }
+  },
+  computed: {
+    redbagState () {
+      return (item) => {
+        if (Number(item.remaining_balance) === 0 || item.received_count === item.count) {
+          return '已领完'
+        } else {
+          return '领取中'
+        }
+      }
+    },
+    getBalance () {
+      return (item) => {
+        const balance = (item.balance - item.remaining_balance) ? (item.balance - item.remaining_balance) : 0
+        return balance
+      }
+    }
+  },
+  methods: {
+    showSendRedBag () {
+      this.$parent.showSendRedBag()
+    },
+    changeActive (type) {
+      this.isActive = type
+    },
+    async getSendList () {
+      try {
+        const list = await window.contract.show_send_list({
+          account_id: window.accountId
+        })
+        list.sort((a, b) => {
+          return b.ts - a.ts
+        })
+        this.activeList = list
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    async getRecvList () {
+      try {
+        const list = await window.contract.show_recv_list({
+          account_id: window.accountId
+        })
+        console.log(list)
+        list.sort((a, b) => {
+          return b.ts - a.ts
+        })
+        this.claimedList = list
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    getQueryVariable (name) {
+      var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
+      var r = window.location.search.substr(1).match(reg)
+      if (r != null) return unescape(r[2])
+      return null
+    },
+    async getNearTotal () {
+      try {
+        const { total } = await window.walletConnection.account().getAccountBalance()
+        this.nearTotal = total
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    showUrlInfo (id) {
+      const secretKey = window.localStorage.getItem(id)
+      if (secretKey) {
+        this.$parent.showQRCode(`${window.baseUrl}?secretKey=${secretKey}#/sendPacket`)
+      } else {
+        this.$notify.error({
+          title: '错误',
+          message: '请使用创建该红包的浏览器进行分享'
+        })
+      }
+    },
+    async showRedbagInfo (item) {
+      const info = await window.contract.show_redbag_detail({
+        public_key: item.id
+      })
+      this.$parent.showRedbagInfo(info, item)
+    },
+    // 撤销红包
+    async revoke (id) {
+      try {
+        this.loading = true
+        // showLoading()
+        window.contract.revoke({
+          public_key: id
+        })
+        this.loading = false
+        // hideLoading()
+      } catch (err) {
+        console.error(err)
+      }
+      this.getSendList()
+    }
+  },
+  filters: {
+    changeNear (value) {
+      if (!value) return 0
+      return (value / 1e24).toFixed(2)
+    }
+  },
+  async created () {
+    if (this.getQueryVariable('active')) {
+      this.isActive = this.getQueryVariable('active')
+    }
+    await this.getSendList()
+    await this.getRecvList()
+    await this.getNearTotal()
+    this.loading = false
+  }
+}
+</script>
