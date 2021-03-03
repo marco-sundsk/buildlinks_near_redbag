@@ -27,8 +27,8 @@ const BASE_ACCESS_KEY_ALLOWANCE: Balance = 500_000_000_000_000_000_000_000;
 /// to be more secure, we set single_claim_cost to 0.050 Near
 /// 
 /// the total cost that create_account_and_claim is a little less than 30T gas,
-/// equal to 0.003 Near
-const SINGLE_CLAIM_COST: Balance = 3_000_000_000_000_000_000_000;
+/// equal to 0.003 Near， Now we set to 0.01 Near for secure
+const SINGLE_CLAIM_COST: Balance = 10_000_000_000_000_000_000_000;
 
 /// the minimum balance that an account must contain to maintain state fee.
 /// 0.1 NEAR
