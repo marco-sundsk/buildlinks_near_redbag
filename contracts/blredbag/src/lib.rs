@@ -20,15 +20,15 @@ use std::convert::TryInto;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-/// Access key allowance for redbag keys,
-/// take it as additional fee used by creation new account.
-const ACCESS_KEY_ALLOWANCE: Balance = 100_000_000_000_000_000_000_000;
+/// the total cost that create_account_and_claim is a little less than 0.020 Near
+/// to be more secure, we set single_claim_cost to 0.050 Near
+const SINGLE_CLAIM_COST: Balance = 50_000_000_000_000_000_000_000;
 
 /// the minimum balance that an account must contain to maintain state fee.
 /// 0.1 NEAR
 const MIN_REDBAG_SHARE: Balance = 100_000_000_000_000_000_000_000;
 
-/// Gas attached to the callback from account creation.
+/// 20T Gas attached to the callback from account creation.
 pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: Gas = 20_000_000_000_000;
 
 /// Indicates there are no deposit for a callback for better readability.
@@ -107,6 +107,19 @@ pub struct HumanReadableRecvBrief {
     pub ts: U64,
 }
 
+// HumanReadableStatistic
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableStatistic {
+    pub total_send_count: u32,  // count of sent redbag
+    pub total_recv_count: u32,  // count of redbag receiver
+    pub total_revoke_count: u32,  // count of revoke 
+    pub total_send_amount: U128,  // total NEAR that sent
+    pub total_recv_amount: U128,  // total NEAR that received
+    pub total_revoke_amount: U128,  // total NEAR that rovoked
+    pub total_account_created: u32,  // count of new account created
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct RedBag {
@@ -116,15 +129,23 @@ pub struct RedBag {
     pub sender_redbag: LookupMap<AccountId, Vec<PublicKey>>,
     // 记录用户领取的红包
     pub receiver_redbag: LookupMap<AccountId, Vec<PublicKey>>,
+    // total redbag send info
+    pub total_send_count: u32,
+    pub total_recv_count: u32,
+    pub total_revoke_count: u32,
+    // toal redbag recv info
+    pub total_send_amount: Balance,
+    pub total_recv_amount: Balance,
+    pub total_revoke_amount: Balance,
+    // total new accounts created
+    pub total_account_created: u32,
 }
 
 #[ext_contract(ext_self)]
 pub trait ExtRedBag {
     /// Callback after creating account and claiming redbag.
-    fn on_account_created_and_claimed(&mut self, amount: U128) -> bool;
     fn on_account_created_and_claimed_ex(&mut self, 
-        pk: Base58PublicKey, account_id: AccountId, 
-        height: U64, amount: U128) -> bool;
+        account_id: AccountId, height: U64, amount: U128) -> bool;
 }
 
 fn is_promise_success() -> bool {
@@ -146,6 +167,13 @@ impl Default for RedBag {
             red_info: LookupMap::new(b"b".to_vec()),
             sender_redbag: LookupMap::new(b"s".to_vec()),
             receiver_redbag: LookupMap::new(b"r".to_vec()),
+            total_send_count: 0,
+            total_recv_count: 0,
+            total_revoke_count: 0,
+            total_send_amount: 0,
+            total_recv_amount: 0,
+            total_revoke_amount: 0,
+            total_account_created: 0,
         }
     }
 }
@@ -162,10 +190,10 @@ impl RedBag {
         mode: u8,
         slogan: String,
     ) -> Promise {
-        let total_aka: Balance = count as Balance * ACCESS_KEY_ALLOWANCE;
+        let ak_allowance: Balance = count as Balance * SINGLE_CLAIM_COST;
         assert!(
-            env::attached_deposit() > total_aka,
-            "Attached deposit must be greater than count * ACCESS_KEY_ALLOWANCE"
+            env::attached_deposit() > ak_allowance + count as Balance * MIN_REDBAG_SHARE,
+            "Attached deposit must be greater than count * (SINGLE_CLAIM_COST + MIN_REDBAG_SHARE)"
         );
 
         let owner = env::signer_account_id();
@@ -183,12 +211,6 @@ impl RedBag {
         } else {
             short_slogan = slogan_vec[..].iter().cloned().collect::<String>();
         }
-        // let short_slogan;
-        // if slogan.len() > 32 {
-        //     short_slogan = &slogan[..32];
-        // } else {
-        //     short_slogan = &slogan[..];
-        // }
 
         // 初始化红包信息并记录
         let new_red_info = RedInfo {
@@ -196,8 +218,8 @@ impl RedBag {
             mode,
             count,
             slogan: short_slogan.to_string(),
-            balance: env::attached_deposit() - total_aka,
-            remaining_balance: env::attached_deposit() - total_aka,
+            balance: env::attached_deposit() - ak_allowance,
+            remaining_balance: env::attached_deposit() - ak_allowance,
             height: env::block_index(),
             ts: env::block_timestamp(),
             claim_info: Vec::new(),
@@ -207,11 +229,14 @@ impl RedBag {
         let mut relation_vec = self.sender_redbag.get(&owner).unwrap_or(Vec::new());
         relation_vec.push(pk.clone());
         self.sender_redbag.insert(&owner, &relation_vec);
+        // 更新统计信息
+        self.total_send_count += 1;
+        self.total_send_amount += env::attached_deposit() - ak_allowance;
 
         // 添加 access key
         Promise::new(env::current_account_id()).add_access_key(
             pk,
-            ACCESS_KEY_ALLOWANCE,
+            ak_allowance,
             env::current_account_id(),
             b"create_account_and_claim,claim".to_vec(),
         )
@@ -226,22 +251,11 @@ impl RedBag {
         let pk = env::signer_account_pk();
         let amount = self.claim_redbag(pk.clone(), new_account_id.clone());
 
-        // Promise::new(new_account_id)
-        //     .create_account()
-        //     .add_full_access_key(new_public_key.into())
-        //     .transfer(amount)
-        //     .then(ext_self::on_account_created_and_claimed(
-        //         amount.into(),
-        //         &env::current_account_id(),
-        //         NO_DEPOSIT,
-        //         ON_CREATE_ACCOUNT_CALLBACK_GAS,
-        //     ))
         Promise::new(new_account_id.clone())
             .create_account()
             .add_full_access_key(new_public_key.into())
             .transfer(amount)
             .then(ext_self::on_account_created_and_claimed_ex(
-                pk.try_into().unwrap(),
                 new_account_id,
                 env::block_index().into(),
                 amount.into(),
@@ -259,6 +273,12 @@ impl RedBag {
 
         Promise::new(account_id).transfer(amount);
 
+        if self.is_redbag_closed(pk) {
+            Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
+        }
+
+        self.total_recv_count += 1;
+        self.total_recv_amount += amount;
         amount.into()
     }
 
@@ -301,6 +321,10 @@ impl RedBag {
         receiver_record.push(pk.clone());
         self.receiver_redbag.insert(&account_id, &receiver_record);
 
+        Promise::new(env::current_account_id()).delete_key(pk);
+
+        self.total_revoke_count += 1;
+        self.total_revoke_amount += amount;
         Promise::new(account_id).transfer(amount)
     }
 
@@ -315,23 +339,16 @@ impl RedBag {
             .into()
     }
 
-    /// obsolete
-    pub fn show_redbag(&self, public_key: Base58PublicKey) -> String {
-        let pk = public_key.into();
-        // 查看红包是否存在
-        let redbag = self.red_info.get(&pk);
-        assert!(redbag.is_some(), "No corresponding redbag found.");
-        let rb = &redbag.unwrap();
-
-        let ci_json: Vec<_> = rb
-            .claim_info
-            .iter()
-            .map(|x| format!("{{\"account\":\"{}\", \"amount\":{}}}", x.user, x.amount))
-            .collect();
-        let recvs_json = format!("[{}]", ci_json.join(","));
-
-        format!("{{\"owner\":\"{}\", \"count\":{}, \"balance\":{}, \"remaining\":{}, \"mode\":{}, \"slogan\":\"{}\",\"list\":\"{}\"}}", 
-            rb.owner, rb.count, rb.balance, rb.remaining_balance, rb.mode, rb.slogan, recvs_json)
+    pub fn show_statistic(&self) -> HumanReadableStatistic {
+        HumanReadableStatistic {
+            total_send_count: self.total_send_count,
+            total_recv_count: self.total_recv_count,
+            total_revoke_count: self.total_revoke_count,
+            total_send_amount: self.total_send_amount.into(),
+            total_recv_amount: self.total_recv_amount.into(),
+            total_revoke_amount: self.total_revoke_amount.into(),
+            total_account_created: self.total_account_created,
+        }
     }
 
     /// 看某个红包的详情
@@ -358,30 +375,12 @@ impl RedBag {
         }
     }
 
-    /// obsolete
-    pub fn show_send(&self, account_id: AccountId) -> Vec<Base58PublicKey> {
-        let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
-        relation_vec
-            .iter()
-            .map(|x| x.clone().try_into().unwrap())
-            .collect()
-    }
-
     /// 查询用户所发的所有红包
     pub fn show_send_list(&self, account_id: AccountId) -> Vec<HumanReadableRedBrief> {
         let relation_vec = self.sender_redbag.get(&account_id).unwrap_or(Vec::new());
         relation_vec
             .iter()
             .map(|x| self.redbag_brief(x))
-            .collect()
-    }
-
-    // obsolete
-    pub fn show_recv(&self, account_id: AccountId) -> Vec<Base58PublicKey> {
-        let relation_vec = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
-        relation_vec
-            .iter()
-            .map(|x| x.clone().try_into().unwrap())
             .collect()
     }
 
@@ -416,51 +415,26 @@ impl RedBag {
     /************************/
 
     /// callback after execution `create_account_and_claim`.
-    pub fn on_account_created_and_claimed(&mut self, amount: U128) -> bool {
-        assert_eq!(
-            env::predecessor_account_id(),
-            env::current_account_id(),
-            "Callback can only be called from the contract"
-        );
-        let creation_succeeded = is_promise_success();
-        if creation_succeeded {
-            // Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
-            assert_eq!(1, 1, "Nop");
-        } else {
-            // In case of failure, put the amount back.
-            // TODO: 失败的情况下，回退资金及相关结构信息的更改
-            // self.accounts.insert(&env::signer_account_pk(), &amount.into());
-            let amount: u128 = amount.into();
-            env::log(
-                format!(
-                    "Create account and claim failed! related amount is {}",
-                    amount
-                )
-                .as_bytes(),
-            );
-            assert_eq!(1, 1, "Nop");
-        }
-        creation_succeeded
-    }
-
     pub fn on_account_created_and_claimed_ex(&mut self, 
-        pk: Base58PublicKey, account_id: AccountId, 
-        height: U64, amount: U128) -> bool {
+        account_id: AccountId, height: U64, amount: U128) -> bool {
             assert_eq!(
                 env::predecessor_account_id(),
                 env::current_account_id(),
                 "Callback can only be called from the contract"
             );
+            let amount: Balance = amount.into();
             let creation_ret = is_promise_success();
             if creation_ret {
-                // Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
-                assert_eq!(1, 1, "Nop");
+                if self.is_redbag_closed(env::signer_account_pk()) {
+                    Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
+                }
+                self.total_account_created += 1;
+                self.total_recv_count += 1;
+                self.total_recv_amount += amount;
             } else {
                 // In case of failure, put the amount back.
-                // TODO: 失败的情况下，回退资金及相关结构信息的更改
-                // self.accounts.insert(&env::signer_account_pk(), &amount.into());
-                let amount: Balance = amount.into();
-                let remove_ret = self.remove_recv(pk.into(), account_id, height.into(), amount);
+                // 失败的情况下，回退资金及相关结构信息的更改
+                let remove_ret = self.remove_recv(env::signer_account_pk(), account_id, height.into(), amount);
                 env::log(
                     format!(
                         "Create account and claim failed! Redbag info rolled back: {}",
@@ -534,6 +508,20 @@ impl RedBag {
         receiver_record.push(pk.clone());
         self.receiver_redbag.insert(&account_id, &receiver_record);
         amount
+    }
+
+    fn is_redbag_closed(&self, pk: PublicKey) -> bool {
+        let redbag = self.red_info.get(&pk).expect("No redbag found for this pk!");
+
+        if redbag.remaining_balance < MIN_REDBAG_SHARE {
+            return true;
+        }
+
+        if redbag.claim_info.len() == redbag.count as usize {
+            return true;
+        }
+
+        false
     }
 
     /// Redbag receiver may encounter errors that 
