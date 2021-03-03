@@ -20,9 +20,15 @@ use std::convert::TryInto;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+/// this 0.5 Near acts as base AKA, which is guaranteed by this contract itself
+const BASE_ACCESS_KEY_ALLOWANCE: Balance = 500_000_000_000_000_000_000_000;
+
 /// the total cost that create_account_and_claim is a little less than 0.020 Near
 /// to be more secure, we set single_claim_cost to 0.050 Near
-const SINGLE_CLAIM_COST: Balance = 50_000_000_000_000_000_000_000;
+/// 
+/// the total cost that create_account_and_claim is a little less than 30T gas,
+/// equal to 0.003 Near
+const SINGLE_CLAIM_COST: Balance = 3_000_000_000_000_000_000_000;
 
 /// the minimum balance that an account must contain to maintain state fee.
 /// 0.1 NEAR
@@ -190,9 +196,9 @@ impl RedBag {
         mode: u8,
         slogan: String,
     ) -> Promise {
-        let ak_allowance: Balance = count as Balance * SINGLE_CLAIM_COST;
+        let fee_cost: Balance = count as Balance * SINGLE_CLAIM_COST;
         assert!(
-            env::attached_deposit() > ak_allowance + count as Balance * MIN_REDBAG_SHARE,
+            env::attached_deposit() > fee_cost + count as Balance * MIN_REDBAG_SHARE,
             "Attached deposit must be greater than count * (SINGLE_CLAIM_COST + MIN_REDBAG_SHARE)"
         );
 
@@ -218,8 +224,8 @@ impl RedBag {
             mode,
             count,
             slogan: short_slogan.to_string(),
-            balance: env::attached_deposit() - ak_allowance,
-            remaining_balance: env::attached_deposit() - ak_allowance,
+            balance: env::attached_deposit() - fee_cost,
+            remaining_balance: env::attached_deposit() - fee_cost,
             height: env::block_index(),
             ts: env::block_timestamp(),
             claim_info: Vec::new(),
@@ -231,12 +237,12 @@ impl RedBag {
         self.sender_redbag.insert(&owner, &relation_vec);
         // 更新统计信息
         self.total_send_count += 1;
-        self.total_send_amount += env::attached_deposit() - ak_allowance;
+        self.total_send_amount += env::attached_deposit() - fee_cost;
 
         // 添加 access key
         Promise::new(env::current_account_id()).add_access_key(
             pk,
-            ak_allowance,
+            BASE_ACCESS_KEY_ALLOWANCE + fee_cost,
             env::current_account_id(),
             b"create_account_and_claim,claim".to_vec(),
         )
