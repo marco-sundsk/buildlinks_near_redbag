@@ -126,6 +126,26 @@ pub struct HumanReadableStatistic {
     pub total_account_created: u32,  // count of new account created
 }
 
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct RedBag {
+    // 红包库
+    pub red_info: LookupMap<PublicKey, RedInfo>,
+    // 记录用户发送的红包
+    pub sender_redbag: LookupMap<AccountId, Vec<PublicKey>>,
+    // 记录用户领取的红包
+    pub receiver_redbag: LookupMap<AccountId, Vec<PublicKey>>,
+    // total redbag send info
+    pub total_send_count: u32,
+    pub total_recv_count: u32,
+    pub total_revoke_count: u32,
+    // toal redbag recv info
+    pub total_send_amount: Balance,
+    pub total_recv_amount: Balance,
+    pub total_revoke_amount: Balance,
+    // total new accounts created
+    pub total_account_created: u32,
+}
 
 #[ext_contract(ext_self)]
 pub trait ExtRedBag {
@@ -146,50 +166,10 @@ fn is_promise_success() -> bool {
     }
 }
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct RedBag {
-    pub owner_id: AccountId,
-    pub base_aka: Balance,
-    pub single_recv_fee: Balance,
-    // 红包库
-    pub red_info: LookupMap<PublicKey, RedInfo>,
-    // 记录用户发送的红包
-    pub sender_redbag: LookupMap<AccountId, Vec<PublicKey>>,
-    // 记录用户领取的红包
-    pub receiver_redbag: LookupMap<AccountId, Vec<PublicKey>>,
-    // total redbag send info
-    pub total_send_count: u32,
-    pub total_recv_count: u32,
-    pub total_revoke_count: u32,
-    // toal redbag recv info
-    pub total_send_amount: Balance,
-    pub total_recv_amount: Balance,
-    pub total_revoke_amount: Balance,
-    // total new accounts created
-    pub total_account_created: u32,
-}
-
 impl Default for RedBag {
     fn default() -> Self {
-        env::panic(b"This contract should be initialized before usage")
-    }
-}
-
-
-#[near_bindgen]
-impl RedBag {
-
-    #[init]
-    pub fn new(owner_id: AccountId, ) -> Self {
-        assert!(!env::state_exists(), "Already initialized");
-        assert!(env::is_valid_account_id(owner_id.as_bytes()),
-            "The owner account ID is invalid");
-        
+        // env::panic(b"dice contract should be initialized before usage")
         Self {
-            owner_id,
-            base_aka: BASE_ACCESS_KEY_ALLOWANCE,
-            single_recv_fee: SINGLE_CLAIM_COST,
             red_info: LookupMap::new(b"b".to_vec()),
             sender_redbag: LookupMap::new(b"s".to_vec()),
             receiver_redbag: LookupMap::new(b"r".to_vec()),
@@ -202,6 +182,10 @@ impl RedBag {
             total_account_created: 0,
         }
     }
+}
+
+#[near_bindgen]
+impl RedBag {
 
     /// 发红包功能
     #[payable]
@@ -212,10 +196,10 @@ impl RedBag {
         mode: u8,
         slogan: String,
     ) -> Promise {
-        let fee_cost: Balance = count as Balance * self.single_recv_fee;
+        let fee_cost: Balance = count as Balance * SINGLE_CLAIM_COST;
         assert!(
             env::attached_deposit() > fee_cost + count as Balance * MIN_REDBAG_SHARE,
-            "Attached deposit must be greater than count * (single_recv_fee + MIN_REDBAG_SHARE)"
+            "Attached deposit must be greater than count * (SINGLE_CLAIM_COST + MIN_REDBAG_SHARE)"
         );
 
         let owner = env::signer_account_id();
@@ -258,7 +242,7 @@ impl RedBag {
         // 添加 access key
         Promise::new(env::current_account_id()).add_access_key(
             pk,
-            self.base_aka + fee_cost,
+            BASE_ACCESS_KEY_ALLOWANCE + fee_cost,
             env::current_account_id(),
             b"create_account_and_claim,claim".to_vec(),
         )
