@@ -88,3 +88,4 @@ Cargo.lock
 
 accounts/
 res/*.wasm
+./frontent/src/node_modules/**

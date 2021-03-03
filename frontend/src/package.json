@@ -1,0 +1,86 @@
+{
+  "name": "buildlinks-near-redbag",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "NODE_ENV=testnet vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "babel-plugin-component": "^1.1.1",
+    "core-js": "^3.6.5",
+    "element-ui": "^2.15.1",
+    "layui-layer": "^1.0.9",
+    "mint-ui": "^2.2.13",
+    "moment": "^2.29.1",
+    "near-api-js": "~0.35.0",
+    "postcss-px2rem": "^0.3.0",
+    "px2rem-loader": "^0.1.9",
+    "qrcode": "^1.4.4",
+    "qrcodejs2": "^0.0.2",
+    "regenerator-runtime": "~0.13.5",
+    "vue": "^2.6.11",
+    "vue-layer": "^1.2.1",
+    "vue-router": "^3.2.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/eslint-config-standard": "^5.1.2",
+    "babel-eslint": "^10.1.0",
+    "env-cmd": "~10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-vue": "^6.2.2",
+    "gh-pages": "~3.1.0",
+    "jest": "~26.6.2",
+    "jest-environment-node": "~26.6.2",
+    "less": "^3.0.4",
+    "less-loader": "^5.0.0",
+    "lint-staged": "^9.5.0",
+    "nodemon": "~2.0.3",
+    "parcel-bundler": "~1.12.4",
+    "shelljs": "~0.8.4",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/standard"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,jsx,vue}": [
+      "vue-cli-service lint",
+      "git add"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "near-cli/test_environment",
+    "testPathIgnorePatterns": [
+      "<rootDir>/node_modules/"
+    ]
+  }
+}
