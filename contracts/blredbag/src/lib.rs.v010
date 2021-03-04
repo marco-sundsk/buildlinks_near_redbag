@@ -9,9 +9,16 @@ use near_sdk::{
 };
 use std::collections::HashSet;
 use uint::construct_uint;
+
+construct_uint! {
+    /// 256-bit unsigned integer.
+    pub struct U256(4);
+}
+
 use std::convert::TryInto;
 
-mod internal;
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// this 0.5 Near acts as base AKA, which is guaranteed by this contract itself
 const BASE_ACCESS_KEY_ALLOWANCE: Balance = 500_000_000_000_000_000_000_000;
@@ -21,7 +28,6 @@ const BASE_ACCESS_KEY_ALLOWANCE: Balance = 500_000_000_000_000_000_000_000;
 /// 
 /// the total cost that create_account_and_claim is a little less than 30T gas,
 /// equal to 0.003 Near， Now we set to 0.01 Near for secure
-const MIN_SINGLE_CLAIM_COST: Balance = 3_000_000_000_000_000_000_000;
 const SINGLE_CLAIM_COST: Balance = 10_000_000_000_000_000_000_000;
 
 /// the minimum balance that an account must contain to maintain state fee.
@@ -33,14 +39,6 @@ pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: Gas = 20_000_000_000_000;
 
 /// Indicates there are no deposit for a callback for better readability.
 const NO_DEPOSIT: Balance = 0;
-
-construct_uint! {
-    /// 256-bit unsigned integer.
-    pub struct U256(4);
-}
-
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// one claim info
 #[derive(BorshDeserialize, BorshSerialize, Clone)]
@@ -119,9 +117,6 @@ pub struct HumanReadableRecvBrief {
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableStatistic {
-    pub owner_id: AccountId,
-    pub base_aka: U128,
-    pub single_recv_fee: U128,
     pub total_send_count: u32,  // count of sent redbag
     pub total_recv_count: u32,  // count of redbag receiver
     pub total_revoke_count: u32,  // count of revoke 
@@ -131,6 +126,26 @@ pub struct HumanReadableStatistic {
     pub total_account_created: u32,  // count of new account created
 }
 
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct RedBag {
+    // 红包库
+    pub red_info: LookupMap<PublicKey, RedInfo>,
+    // 记录用户发送的红包
+    pub sender_redbag: LookupMap<AccountId, Vec<PublicKey>>,
+    // 记录用户领取的红包
+    pub receiver_redbag: LookupMap<AccountId, Vec<PublicKey>>,
+    // total redbag send info
+    pub total_send_count: u32,
+    pub total_recv_count: u32,
+    pub total_revoke_count: u32,
+    // toal redbag recv info
+    pub total_send_amount: Balance,
+    pub total_recv_amount: Balance,
+    pub total_revoke_amount: Balance,
+    // total new accounts created
+    pub total_account_created: u32,
+}
 
 #[ext_contract(ext_self)]
 pub trait ExtRedBag {
@@ -151,49 +166,10 @@ fn is_promise_success() -> bool {
     }
 }
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct RedBag {
-    pub owner_id: AccountId,
-    pub base_aka: Balance,
-    pub single_recv_fee: Balance,
-    // 红包库
-    pub red_info: LookupMap<PublicKey, RedInfo>,
-    // 记录用户发送的红包
-    pub sender_redbag: LookupMap<AccountId, Vec<PublicKey>>,
-    // 记录用户领取的红包
-    pub receiver_redbag: LookupMap<AccountId, Vec<PublicKey>>,
-    // total redbag send info
-    pub total_send_count: u32,
-    pub total_recv_count: u32,
-    pub total_revoke_count: u32,
-    // toal redbag recv info
-    pub total_send_amount: Balance,
-    pub total_recv_amount: Balance,
-    pub total_revoke_amount: Balance,
-    // total new accounts created
-    pub total_account_created: u32,
-}
-
 impl Default for RedBag {
     fn default() -> Self {
-        env::panic(b"This contract should be initialized before usage")
-    }
-}
-
-#[near_bindgen]
-impl RedBag {
-
-    #[init]
-    pub fn new(owner_id: AccountId, ) -> Self {
-        assert!(!env::state_exists(), "Already initialized");
-        assert!(env::is_valid_account_id(owner_id.as_bytes()),
-            "The owner account ID is invalid");
-        
+        // env::panic(b"dice contract should be initialized before usage")
         Self {
-            owner_id,
-            base_aka: BASE_ACCESS_KEY_ALLOWANCE,
-            single_recv_fee: SINGLE_CLAIM_COST,
             red_info: LookupMap::new(b"b".to_vec()),
             sender_redbag: LookupMap::new(b"s".to_vec()),
             receiver_redbag: LookupMap::new(b"r".to_vec()),
@@ -206,34 +182,10 @@ impl RedBag {
             total_account_created: 0,
         }
     }
+}
 
-    //***********************/
-    // owner functions
-    //***********************/
-
-    pub fn change_owner_id(&mut self, new_owner_id: AccountId) {
-        self.assert_owner();
-        assert!(env::is_valid_account_id(new_owner_id.as_bytes()),
-            "The owner account ID is invalid");
-        self.owner_id = new_owner_id;
-    }
-
-    pub fn update_single_recv_fee(&mut self, single_recv_fee: U128) {
-        self.assert_owner();
-        let single_recv_fee: Balance = single_recv_fee.into();
-        assert!(single_recv_fee > MIN_SINGLE_CLAIM_COST, 
-            "single_recv_fee is too low");
-        self.single_recv_fee = single_recv_fee;
-    }
-
-    pub fn update_base_aka(&mut self, base_aka: U128) {
-        self.assert_owner();
-        self.base_aka = base_aka.into();
-    }
-
-    //***********************/
-    // user functions
-    //***********************/
+#[near_bindgen]
+impl RedBag {
 
     /// 发红包功能
     #[payable]
@@ -244,10 +196,10 @@ impl RedBag {
         mode: u8,
         slogan: String,
     ) -> Promise {
-        let fee_cost: Balance = count as Balance * self.single_recv_fee;
+        let fee_cost: Balance = count as Balance * SINGLE_CLAIM_COST;
         assert!(
             env::attached_deposit() > fee_cost + count as Balance * MIN_REDBAG_SHARE,
-            "Attached deposit must be greater than count * (single_recv_fee + MIN_REDBAG_SHARE)"
+            "Attached deposit must be greater than count * (SINGLE_CLAIM_COST + MIN_REDBAG_SHARE)"
         );
 
         let owner = env::signer_account_id();
@@ -290,7 +242,7 @@ impl RedBag {
         // 添加 access key
         Promise::new(env::current_account_id()).add_access_key(
             pk,
-            self.base_aka + fee_cost,
+            BASE_ACCESS_KEY_ALLOWANCE + fee_cost,
             env::current_account_id(),
             b"create_account_and_claim,claim".to_vec(),
         )
@@ -395,9 +347,6 @@ impl RedBag {
 
     pub fn show_statistic(&self) -> HumanReadableStatistic {
         HumanReadableStatistic {
-            owner_id: self.owner_id.clone(),
-            base_aka: self.base_aka.into(),
-            single_recv_fee: self.single_recv_fee.into(),
             total_send_count: self.total_send_count,
             total_recv_count: self.total_recv_count,
             total_revoke_count: self.total_revoke_count,
@@ -474,34 +423,218 @@ impl RedBag {
     /// callback after execution `create_account_and_claim`.
     pub fn on_account_created_and_claimed_ex(&mut self, 
         account_id: AccountId, height: U64, amount: U128) -> bool {
-        assert_eq!(
-            env::predecessor_account_id(),
-            env::current_account_id(),
-            "Callback can only be called from the contract"
-        );
-        let amount: Balance = amount.into();
-        let creation_ret = is_promise_success();
-        if creation_ret {
-            if self.is_redbag_closed(env::signer_account_pk()) {
-                Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
-            }
-            self.total_account_created += 1;
-            self.total_recv_count += 1;
-            self.total_recv_amount += amount;
-        } else {
-            // In case of failure, put the amount back.
-            // 失败的情况下，回退资金及相关结构信息的更改
-            let remove_ret = self.remove_recv(env::signer_account_pk(), account_id, height.into(), amount);
-            env::log(
-                format!(
-                    "Create account and claim failed! Redbag info rolled back: {}",
-                    remove_ret
-                )
-                .as_bytes(),
+            assert_eq!(
+                env::predecessor_account_id(),
+                env::current_account_id(),
+                "Callback can only be called from the contract"
             );
-            
+            let amount: Balance = amount.into();
+            let creation_ret = is_promise_success();
+            if creation_ret {
+                if self.is_redbag_closed(env::signer_account_pk()) {
+                    Promise::new(env::current_account_id()).delete_key(env::signer_account_pk());
+                }
+                self.total_account_created += 1;
+                self.total_recv_count += 1;
+                self.total_recv_amount += amount;
+            } else {
+                // In case of failure, put the amount back.
+                // 失败的情况下，回退资金及相关结构信息的更改
+                let remove_ret = self.remove_recv(env::signer_account_pk(), account_id, height.into(), amount);
+                env::log(
+                    format!(
+                        "Create account and claim failed! Redbag info rolled back: {}",
+                        remove_ret
+                    )
+                    .as_bytes(),
+                );
+                
+            }
+            creation_ret
         }
-        creation_ret
+
+    /************************/
+    /* internal functions   */
+    /************************/
+
+    fn claim_redbag(&mut self, pk: PublicKey, account_id: AccountId) -> Balance {
+        // 查看红包是否存在
+        let redbag = self.red_info.get(&pk);
+        assert!(redbag.is_some(), "No corresponding redbag found.");
+
+        // 查看红包剩余数量是否可被领取
+        let mut rb = &mut redbag.unwrap();
+
+        // 判断用户是否领取过
+        assert!(
+            rb.claim_info
+                .iter()
+                .filter(|x| x.user == account_id)
+                .count()
+                == 0,
+            "Sorry, you have claimed this redbag before."
+        );
+        
+        assert!(
+            rb.claim_info.len() < rb.count as usize,
+            "Sorry, the redbag has been claimed out."
+        );
+        assert!(
+            rb.remaining_balance != 0,
+            "Sorry, the redbag has been revoked."
+        );
+        assert!(
+            rb.remaining_balance >= MIN_REDBAG_SHARE,
+            "Sorry, the redbag has few value to be claimed."
+        );
+        
+        // 领取红包 如果是最后一个领取人，则拿走所有
+        let amount = if rb.claim_info.len() == rb.count as usize - 1 {
+            rb.remaining_balance
+        } else {
+            if rb.mode == 1 {
+                self.random_amount(&rb)
+            } else {
+                self.even_amount(&rb)
+            }
+        };
+        // 更新红包记录
+        rb.remaining_balance -= amount;
+        let ci = ClaimInfo {
+            user: account_id.clone(),
+            amount,
+            height: env::block_index(),
+            ts: env::block_timestamp(),
+        };
+        rb.claim_info.push(ci);
+        self.red_info.insert(&pk, &rb);
+
+        // 更新领取人记录
+        let mut receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
+        receiver_record.push(pk.clone());
+        self.receiver_redbag.insert(&account_id, &receiver_record);
+        amount
+    }
+
+    fn is_redbag_closed(&self, pk: PublicKey) -> bool {
+        let redbag = self.red_info.get(&pk).expect("No redbag found for this pk!");
+
+        if redbag.remaining_balance < MIN_REDBAG_SHARE {
+            return true;
+        }
+
+        if redbag.claim_info.len() == redbag.count as usize {
+            return true;
+        }
+
+        false
+    }
+
+    /// Redbag receiver may encounter errors that 
+    /// may cause the create_account_and_claim fail, 
+    /// in this case, the claim_info vec in red_info 
+    /// and receiver_redbag map need to be rolled back.
+    fn remove_recv(&mut self, pk: PublicKey, account_id: AccountId, 
+        height: u64, amount: Balance) -> bool {
+
+        // handle roll back of red_info
+        let redbag = self.red_info.get(&pk);
+        if redbag.is_none() {
+            return false;
+        }
+        let mut rb = &mut redbag.unwrap();
+        rb.remaining_balance += amount;
+        let new_claim_info: Vec<ClaimInfo> = rb.claim_info
+            .iter().filter(|x| x.user != account_id 
+                || x.height != height 
+                || x.amount != amount)
+            .map(|x| x.clone()).collect();
+        rb.claim_info = new_claim_info;
+        self.red_info.insert(&pk, &rb);
+        
+        // handle roll back of receiver_redbag
+        let receiver_record = self.receiver_redbag.get(&account_id).unwrap_or(Vec::new());
+        let new_recv_record: Vec<PublicKey> = receiver_record
+            .iter().filter(|x| **x != pk).map(|x| x.clone()).collect();
+        if receiver_record.len() > 0 {
+            self.receiver_redbag.insert(&account_id, &new_recv_record);
+        } else {
+            self.receiver_redbag.remove(&account_id);
+        }
+        
+        true
+    }
+
+    /// 生成随机, 255个层级 total_amount * share_rate / u8::max_value().into()
+    fn random_amount(&self, rb: &RedInfo) -> u128 {
+
+        // figure out standard share
+        // then got random scope is [standard/2, standard*3/2]
+        let standard = rb.remaining_balance / (rb.count as usize - rb.claim_info.len()) as u128;
+        let left_bound = standard / 2;
+        let right_bound = standard * 3 / 2;
+
+        // got random in scope
+        let random_u8: u8 = env::random_seed().iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
+        let offset = (right_bound - left_bound) * random_u8 as u128 / 0x100_u128;
+
+        env::log(
+            format!(
+                "Create random {} in scope [{}, {}]",
+                offset, left_bound, right_bound
+            )
+            .as_bytes(),
+        );
+
+        // keep random_share illegal 
+        let random_share = left_bound + offset;
+        if random_share >= MIN_REDBAG_SHARE {
+            random_share
+        } else {
+            MIN_REDBAG_SHARE
+        }
+    }
+
+    fn even_amount(&self, rb: &RedInfo) -> u128 {
+        let even_share = rb.balance / rb.count as u128;
+        if even_share >= MIN_REDBAG_SHARE {
+            even_share
+        } else {
+            MIN_REDBAG_SHARE
+        }
+    }
+
+    fn format_claiminfo(&self, claiminfo: &ClaimInfo) -> HumanReadableClaimInfo {
+        HumanReadableClaimInfo {
+            user: claiminfo.user.clone(),
+            amount: claiminfo.amount.into(),
+            height: claiminfo.height.into(),
+            ts: claiminfo.ts.into(),
+        }
+    }
+
+    fn redbag_brief(&self, pk: &PublicKey) -> HumanReadableRedBrief {
+        let redbag_info = self.red_info.get(pk).unwrap();
+        HumanReadableRedBrief {
+            owner: redbag_info.owner,
+            id: (*pk).clone().try_into().unwrap(),
+            mode: redbag_info.mode,
+            count: redbag_info.count,
+            balance: redbag_info.balance.into(),
+            remaining_balance: redbag_info.remaining_balance.into(),
+            received_count: redbag_info.claim_info.len() as u8,
+            height: redbag_info.height.into(),
+            ts: redbag_info.ts.into(),
+        }
+    }
+
+    fn recv_brief(&self, pk: &PublicKey, claim: &ClaimInfo) -> HumanReadableRecvBrief {
+        HumanReadableRecvBrief {
+            id: pk.clone().try_into().unwrap(),
+            balance: claim.amount.into(),
+            height: claim.height.into(),
+            ts: claim.ts.into(),
+        }
     }
 }
 
