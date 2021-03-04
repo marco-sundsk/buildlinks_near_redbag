@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:53:52
- * @LastEditTime: 2021-03-02 19:38:48
+ * @LastEditTime: 2021-03-04 13:45:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
@@ -14,7 +14,7 @@
         <div class="near-balance-title">余额</div>
         <div class="near-balance-funds">{{nearTotal | changeNear}} <small>Ⓝ</small></div>
         <div class="near-balance-actions">
-          <button class="btn btn-primary" @click="showSendRedBag">+ 点击创建红包</button>
+          <button class="btn btn-primary" @click="showSendRedBag">+点击创建红包</button>
         </div>
       </div>
       <div class="near-tabs">
@@ -34,7 +34,7 @@
                   <div class="drop-item-status">{{redbagState(item)}}</div>
                   <div class="drop-item-pubkey text-ellipsis text-gray">发送时间: {{item.ts | changeTime}}</div>
                   <button class="btn btn-sm btn-primary" @click.stop="showUrlInfo(item.id)">发红包</button>
-                  <button v-if="Number(item.remaining_balance) !== 0" class="btn btn-sm btn-link" @click.stop="revoke(item.id)">撤回</button>
+                  <button v-if="Number(item.remaining_balance) !== 0" class="btn btn-sm btn-link" @click.stop="revokeAlertShow(item.id)">撤回</button>
               </div>
           </div>
           <div v-else class="empty">
@@ -59,18 +59,27 @@
         </div>
       </div>
     </div>
+    <redbag-alert v-if="revokeAlert" title="确认撤回该红包?" alertType="confirm"></redbag-alert>
+    <redbag-alert v-if="shareAlert" title="请使用创建该红包的浏览器进行分享"></redbag-alert>
   </div>
 </template>
 
 <script>
+import RedbagAlert from '@/components/RedbagAlert.vue'
 export default {
+  components: {
+    RedbagAlert
+  },
   data () {
     return {
       loading: true,
       isActive: 'active',
       activeList: [],
       claimedList: [],
-      nearTotal: ''
+      nearTotal: '',
+      shareAlert: false,
+      revokeAlert: false,
+      currentPk: ''
     }
   },
   computed: {
@@ -91,6 +100,15 @@ export default {
     }
   },
   methods: {
+    alertHide (state = '') {
+      if (state === 'revoke') this.revoke(this.currentPk)
+      this.shareAlert = false
+      this.revokeAlert = false
+    },
+    revokeAlertShow (id) {
+      this.currentPk = id
+      this.revokeAlert = true
+    },
     showSendRedBag () {
       this.$parent.showSendRedBag()
     },
@@ -115,7 +133,6 @@ export default {
         const list = await window.contract.show_recv_list({
           account_id: window.accountId
         })
-        console.log(list)
         list.sort((a, b) => {
           return b.ts - a.ts
         })
@@ -135,18 +152,15 @@ export default {
         const { total } = await window.walletConnection.account().getAccountBalance()
         this.nearTotal = total
       } catch (err) {
-        console.log(err)
+        console.error(err)
       }
     },
     showUrlInfo (id) {
       const secretKey = window.localStorage.getItem(id)
       if (secretKey) {
-        this.$parent.showQRCode(`${window.baseUrl}?secretKey=${secretKey}#/sendPacket`)
+        this.$parent.showQRCode(`${window.baseUrl}#/sendPacket?secretKey=${secretKey}`)
       } else {
-        this.$notify.error({
-          title: '错误',
-          message: '请使用创建该红包的浏览器进行分享'
-        })
+        this.shareAlert = true
       }
     },
     async showRedbagInfo (item) {
@@ -159,12 +173,10 @@ export default {
     async revoke (id) {
       try {
         this.loading = true
-        // showLoading()
-        window.contract.revoke({
+        await window.contract.revoke({
           public_key: id
         })
         this.loading = false
-        // hideLoading()
       } catch (err) {
         console.error(err)
       }

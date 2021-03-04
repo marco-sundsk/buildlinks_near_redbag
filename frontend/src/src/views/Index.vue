@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 11:37:19
- * @LastEditTime: 2021-03-02 18:26:57
+ * @LastEditTime: 2021-03-04 15:17:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/views/Home.vue
@@ -20,14 +20,14 @@
                   <span class="text-ellipsis">{{accountId}}</span>
                 </div>
                 <ul class="menu">
-                  <li class="menu-item">
+                  <!-- <li class="menu-item">
                     <a href="#">
                       Backup NEAR Drops
                     </a>
-                  </li>
-                  <li class="divider"></li>
+                  </li> -->
+                  <!-- <li class="divider"></li> -->
                   <li class="menu-item">
-                    <a href={window.nearConfig.walletUrl} target="_blank">
+                    <a @click="goWallet('https://wallet.near.org')">
                       NEAR Wallet
                     </a>
                   </li>
@@ -43,10 +43,25 @@
       <div class="near-dapp-body">
         <div>
           <drop v-if="isLogin"></drop>
+          <div v-else-if="isLoading" class="loading"></div>
           <div v-else class="empty">
               <div class="empty-icon">🧧</div>
               <p class="empty-title h5">欢迎使用Near红包</p>
               <p class="empty-subtitle">Login and Send NEAR Redpackets.</p>
+              <div class="statistic-wrap">
+                <div class="statistic-item">
+                  <div class="statistic-item-header">已发送红包数</div>
+                  <div class="statistic-item-total">{{statistic.total_send_count}}</div>
+                </div>
+                <div class="statistic-item">
+                  <div class="statistic-item-header">已发送金额</div>
+                  <div class="statistic-item-total">{{statistic.total_send_amount | changeNear}} <small>Ⓝ</small></div>
+                </div>
+                <div class="statistic-item">
+                  <div class="statistic-item-header">新建账户数</div>
+                  <div class="statistic-item-total">{{statistic.total_account_created}}</div>
+                </div>
+              </div>
               <div class="empty-action">
                 <div class="near-user">
                   <a class="btn" href="#" @click="requestSignIn">
@@ -89,7 +104,9 @@ export default {
       url: '',
       redbagInfo: '',
       isRedbagInfo: false,
-      redbagBrief: ''
+      redbagBrief: '',
+      statistic: {},
+      isLoading: true
     }
   },
   methods: {
@@ -108,7 +125,6 @@ export default {
     },
     requestSignIn () {
       if (this.$route.query.active) {
-        console.log(this.$route.query.active)
         login(this.$route.query.active)
       } else {
         login()
@@ -124,6 +140,19 @@ export default {
     },
     cancelRedbagInfo () {
       this.isRedbagInfo = false
+    },
+    async getStatistic () {
+      const statistic = await window.contract.show_statistic()
+      this.statistic = statistic
+    },
+    goWallet (url) {
+      window.open(url)
+    }
+  },
+  filters: {
+    changeNear (value) {
+      if (!value) return 0
+      return (value / 1e24).toFixed(2)
     }
   },
   created () {
@@ -134,6 +163,8 @@ export default {
           that.isLogin = true
           that.accountId = window.accountId
         } else {
+          await that.getStatistic()
+          that.isLoading = false
           that.isLogin = false
         }
       })

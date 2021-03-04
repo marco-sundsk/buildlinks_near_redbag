@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-02 19:28:46
+ * @LastEditTime: 2021-03-04 15:46:20
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit<
  * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
@@ -13,9 +13,9 @@
         <div class="near-redpacket-header" :style="animationHeader">
           <img class="redpacket-cover" src="../assets/img/redpacket-cover.svg" alt="" />
           <button class="redpacket-btn" :style="animationBtn">拆封</button>
-          <div class="redpacket-login" v-if="!isLogin">
-            <div class="login active" @click="login">已有账户登录</div>
-            <div class="register" @click="register">注册Near账户</div>
+          <div class="redpacket-login" :class="{registerLogin: !registerBtnShow}" v-if="!isLogin">
+            <div class="login" :class="{active: registerBtnShow}" @click="login">{{loginText}}</div>
+            <div v-if="registerBtnShow" class="register" @click="register">注册Near账户</div>
           </div>
         </div>
         <div class="near-redpacket-body">
@@ -54,12 +54,13 @@ export default {
   data () {
     return {
       isLogin: false,
-      isActive: 'active',
       drawMoney: '',
       loading: true,
       yesOrNo: false,
       registerBtn: false,
-      errInfo: ''
+      errInfo: '',
+      loginState: 'login',
+      registerBtnShow: true
     }
   },
   computed: {
@@ -71,17 +72,14 @@ export default {
     },
     animationCard () {
       return this.isLogin ? '-webkit-animation: re-slide-down 3s ease-in-out 1 forwards;' : ''
+    },
+    loginText () {
+      return this.registerBtnShow ? '已有账户登录' : '登录'
     }
   },
   methods: {
-    getQueryVariable (name) {
-      var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
-      var r = window.location.search.substr(1).match(reg)
-      if (r != null) return unescape(r[2])
-      return null
-    },
     getSecretKeyByUrl () {
-      const key = this.getQueryVariable('secretKey')
+      const key = this.$route.query.secretKey
       return key
     },
     async claim () {
@@ -89,10 +87,10 @@ export default {
         this.yesOrNo = true
         const account = this.getAccount()
         const key = this.getSecretKeyByUrl()
-        // if (!key) {
-        //   this.$router.push('/')
-        //   return
-        // }
+        if (!key) {
+          this.$router.push('/')
+          return
+        }
         await window.walletConnection._keyStore.setKey(
           window.nearConfig.networkId,
           window.nearConfig.contractName,
@@ -130,12 +128,21 @@ export default {
       return new Account(window.near.connection, window.nearConfig.contractName)
     },
     login () {
-      this.isActive = 'active'
-      login()
+      if (this.loginState === 'login') {
+        login()
+      } else {
+        this.$router.push({
+          name: 'Index',
+          query: {
+            active: 'claimed'
+          }
+        })
+      }
     },
     async register () {
       try {
-        this.isActive = 'register'
+        this.loginState = 'register'
+        this.registerBtnShow = false
         this.registerBtn = true
         const secreKey = this.getSecretKeyByUrl()
         const walletUrl = await this.getWalletLink(secreKey)
@@ -146,14 +153,6 @@ export default {
     },
     goIndex () {
       this.$router.push('/')
-    },
-    goIndexToReceived () {
-      this.$router.push({
-        name: 'Index',
-        query: {
-          active: 'claimed'
-        }
-      })
     }
   },
   created () {
@@ -161,7 +160,7 @@ export default {
     initContract()
       .then(async () => {
         if (window.walletConnection.isSignedIn()) {
-          that.isLogin = false
+          that.isLogin = true
           await this.claim()
           that.loading = false
         } else {

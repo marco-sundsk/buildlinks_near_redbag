@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-02-26 11:37:19
- * @LastEditTime: 2021-03-01 21:19:31
+ * @LastEditTime: 2021-03-04 11:08:02
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/main.js
@@ -9,15 +9,12 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
-// import '@/assets/css/base.css'
-import '@/assets/css/spectre.css'
 import '@/assets/css/near.css'
 import { initContract } from './utils/utils'
 import moment from 'moment'
+import VueClipboard from 'vue-clipboard2'
 
-Vue.use(ElementUI)
+Vue.use(VueClipboard)
 Vue.config.productionTip = false
 
 // ---------------filter

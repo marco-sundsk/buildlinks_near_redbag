@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-02 16:29:54
+ * @LastEditTime: 2021-03-04 11:23:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /near-swap-front/src/utils/config.js
@@ -26,7 +26,7 @@ function getConfig (env) {
         networkId: 'testnet',
         nodeUrl: 'https://rpc.testnet.near.org',
         contractName: CONTRACT_NAME,
-        walletUrl: 'http://47.242.35.20/',
+        walletUrl: 'http://47.242.35.20',
         helperUrl: 'https://helper.testnet.near.org',
         explorerUrl: 'https://explorer.testnet.near.org'
       }

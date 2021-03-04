@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-02 18:30:33
+ * @LastEditTime: 2021-03-04 15:49:36
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /swap/src/utils/utils.js
@@ -31,7 +31,8 @@ export async function initContract () {
       'show_send_list',
       'show_recv_list',
       'show_redbag_brief',
-      'show_redbag_detail'
+      'show_redbag_detail',
+      'show_statistic'
     ],
     // Change methods can modify the state. But you don't receive the returned value when called.
     changeMethods: [
@@ -56,5 +57,5 @@ export function login (query = 'active') {
   // user's behalf.
   // This works by creating a new access key for the user's account and storing
   // the private key in localStorage.
-  window.walletConnection.requestSignIn(nearConfig.contractName, 'shenzhen workshop app', `${window.baseUrl}?active=${query}`)
+  window.walletConnection.requestSignIn(nearConfig.contractName, 'NEAR redbag', `${window.baseUrl}?active=${query}`)
 }

@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-28 10:24:19
- * @LastEditTime: 2021-03-02 19:39:43
+ * @LastEditTime: 2021-03-04 11:54:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/SendRedbag.vue
@@ -21,7 +21,7 @@
                 {{redbagType3}}
               </div>
               <div class="center">
-                <el-input v-model="money" placeholder="0.00"></el-input>
+                <input type="text" v-model="money" placeholder="0.00">
               </div>
               <div class="right">Ⓝ</div>
             </div>
@@ -34,12 +34,17 @@
                 红包个数
               </div>
               <div class="center">
-                <el-input v-model="redbagCount" placeholder="填写个数"></el-input>
+                <input type="text" v-model="redbagCount" placeholder="填写个数">
               </div>
               <div class="right">个</div>
             </div>
+            <div class="redbag-type">
+              <span>手续费:</span>
+              <span>0.01</span>
+              <span>Ⓝ/个</span>
+            </div>
             <div class="inp-wrap">
-              <el-input v-model="redbagTitle" placeholder="万事如意，恭喜发财" :maxlength="32"></el-input>
+              <input type="text" v-model="redbagTitle" placeholder="万事如意，恭喜发财" :maxlength="32">
             </div>
           <div class="amount-money">
             <span>{{totalMoney}}</span> <small>Ⓝ</small>
@@ -85,9 +90,9 @@ export default {
     },
     totalMoney () {
       if (this.redbagState && this.money) {
-        return (Number(this.money)).toFixed(2)
+        return ((Number(this.money)) + (this.redbagCount * 0.01)).toFixed(2)
       } else if (!this.redbagState && this.money && this.redbagCount) {
-        return (this.money * this.redbagCount).toFixed(2)
+        return ((this.money * this.redbagCount) + (this.redbagCount * 0.01)).toFixed(2)
       } else {
         return '0.00'
       }

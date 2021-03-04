@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 19:27:38
- * @LastEditTime: 2021-03-02 19:41:47
+ * @LastEditTime: 2021-03-04 14:01:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/RedbagInfo.vue
@@ -21,7 +21,7 @@
           </div>
           <div class="slogan-info">{{redbagInfo.slogan}}</div>
         </div>
-        <div class="line"></div>
+        <!-- <div class="line"></div> -->
         <div class="user-wrap">
           <div class="top">
             {{geCount}}, 共{{(redbagInfo.balance - redbagInfo.remaining_balance) | changeNear}}/{{redbagInfo.balance | changeNear}} Ⓝ

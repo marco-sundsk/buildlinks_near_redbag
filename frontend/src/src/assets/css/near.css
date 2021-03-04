@@ -290,8 +290,8 @@ body {
   color: #313131;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   font-size: .8rem;
-  overflow-x: hidden;
-  text-rendering: optimizeLegibility;
+  /* overflow-x: hidden; */
+  /* text-rendering: optimizeLegibility; */
 }
 
 a {
@@ -591,17 +591,17 @@ html:lang(ko),
 
 .btn:focus,
 .btn:hover {
-  background: #e3514c;
-  border-color: #e1443f;
-  color: #fff;
+  /* background: #e3514c; */
+  /* border-color: #e1443f;
+  color: #fff; */
   text-decoration: none;
 }
 
 .btn:active,
 .btn.active {
-  background: #e1443f;
+  /* background: #e1443f;
   border-color: #dd2f29;
-  color: #fff;
+  color: #fff; */
   text-decoration: none;
 }
 
@@ -2408,6 +2408,25 @@ summary.accordion-header::-webkit-details-marker {
   margin-top: .8rem;
 }
 
+.statistic-wrap {
+  margin-top: .8rem;
+}
+
+.statistic-wrap .statistic-item {
+ padding-top: .3rem;
+}
+
+.statistic-wrap .statistic-item .statistic-item-header {
+  color: #b4b4b4;
+}
+
+.statistic-wrap .statistic-item .statistic-item-total {
+  color: #000;
+  font-weight: 700;
+  padding-top: .3rem;
+  font-size: 1.2rem;
+}
+
 .markdown {
   font-size: .8rem;
   font-weight: 400;
@@ -3877,7 +3896,6 @@ a.text-error:visited {
 /*! NEAR.css | MIT License */
 body {
   background: #f8f8f8 url("../img/dapp-bg.png");
-  overflow: hidden;
 }
 
 .near-container {
@@ -3918,7 +3936,7 @@ body {
 }
 
 .near-container .near-user .btn {
-  max-width: 40vw;
+  max-width: 60vw;
   padding: 0 .5rem 0 0;
 }
 
@@ -3975,23 +3993,48 @@ body {
 }
 
 .near-container .mask {
-  position: absolute;
+  position: fixed;
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
+  padding-top: 2rem;
+  /* align-items: center; */
   top: 0;
   left: 0;
   /* box-shadow: 0 .1rem 1rem rgba(36, 36, 36, .05); */
   background-color: rgba(0, 0, 0, .5);
 }
 
-.near-container .mask .redbag-info-wrap {
+.near-container .mask .redbag-alert {
   width: 85%;
-  height: 90%;
+  max-width: 20rem;
+  height: 8.5rem;
   background-color: #fafafa;
   border-radius: .8rem;
+  box-shadow: .0rem .0rem .4rem rgb(78, 77, 77);
+  position: relative;
+  padding: 1rem;
+  margin-top: 3rem;
+}
+
+.near-container .mask .redbag-alert .btn-wrap {
+  display: flex;
+  justify-content: space-around;
+}
+
+.near-container .mask .redbag-alert .btn-wrap .btn {
+  width: 6rem;
+  justify-content: center;
+}
+
+.near-container .mask .redbag-info-wrap {
+  width: 85%;
+  max-width: 20rem;
+  height: 30rem;
+  background-color: #fafafa;
+  border-radius: .8rem;
+  box-shadow: .0rem .0rem .4rem rgb(78, 77, 77);
   position: relative;
   padding: 1rem;
 }
@@ -4056,20 +4099,26 @@ body {
   overflow: hidden;
   text-overflow:ellipsis; 
   white-space: nowrap;
+  border-bottom: 1px solid #eeeeee;
 }
 
 .near-container .mask .redbag-info-wrap .user-main {
   overflow: auto;
+  max-height: 16rem;
 }
 
 .near-container .mask .redbag-info-wrap .user-main .user-item {
-  border-top: 1px solid #eeeeee;
+  border-bottom: 1px solid #eeeeee;
   width: 97%;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
+}
+
+.near-container .mask .redbag-info-wrap .user-main .user-item:last-child {
+  border: none;
 }
 
 .near-container .mask .redbag-info-wrap .user-main .active {
@@ -4103,17 +4152,21 @@ body {
 
 .near-container .mask .qr-code {
   width: 85%;
+  max-width: 20rem;
+  height: 21rem;
+  max-height: 30rem;
   /* height: 90%; */
   background-color: #fafafa;
   border-radius: .8rem;
+  box-shadow: .0rem .0rem .4rem rgb(78, 77, 77);
   position: relative;
-  padding: 1rem 3rem;
+  padding: 1rem 3rem 2rem;
 }
 
 .near-container .mask .qr-code .main .title {
   height: 5rem;
   text-align: center;
-  padding-top: 2rem;
+  padding-top: 1rem;
 }
 
 .near-container .mask .qr-code .main .title h4 {
@@ -4128,13 +4181,15 @@ body {
 .near-container .mask .qr-code .main .qrccode-canvas-wrap{
   display: flex;
   width: 100%;
+  max-width: 10rem;
   justify-content: center;
-  padding-top: 2rem;
+  margin: 0 auto;
+  /* padding-top: 2rem; */
 }
 
 .near-container .mask .qr-code .main .qrccode-canvas-wrap .qrccode img {
-  width: 10rem;
-  height: 10rem;
+  width: 100%;
+  height: 100%;
 }
 
 .near-container .mask .qr-code .main .url-wrap {
@@ -4147,14 +4202,20 @@ body {
   color: #babbbc;
 }
 
-.near-container .mask .qr-code .main .url-wrap .url{
-  font-size: .8rem;
-  word-break: break-all
+.near-container .mask .qr-code .main .url-wrap .url .btn{
+  width: 100%;
+  max-width: 10rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
 }
 
 .near-container .mask .send-redbag-wrap {
   width: 85%;
   /* height: 90%; */
+  max-width: 20rem;
+  max-height: 29rem;
   background-color: #fafafa;
   border-radius: .8rem;
   position: relative;
@@ -4201,13 +4262,15 @@ body {
 
 .near-container .mask .send-redbag-wrap .main .inp-wrap {
   width: 100%;
-  height: 3.3rem;
+  height: 3.2rem;
   background-color: #fff;
   border-radius: .5rem;
   margin-top: 1rem;
   box-shadow: .0rem .0rem .4rem rgb(201, 201, 201);
   padding: 1rem;
-  font-size: 1rem;
+  font-size: .8rem;
+  font-weight: 500;
+  color: #242424;
   display: flex;
   align-items: center;
 }
@@ -4224,7 +4287,7 @@ body {
   width: 100%;
   border: none;
   text-align: right;
-  font-size: 1rem;
+  font-size: .8rem;
 }
 
 .near-container .mask .send-redbag-wrap .main .inp-wrap .right {
@@ -4235,11 +4298,13 @@ body {
 .near-container .mask .send-redbag-wrap .main .inp-wrap input {
   width: 100%;
   border: none;
-  font-size: 1rem;
+  font-size: .8rem;
 }
 
 .near-container .mask .send-redbag-wrap .main .inp-wrap input::-webkit-input-placeholder {
   color: #e1e1e1;
+  font-size: .8rem;
+  font-weight: 500;
 }
 
 .near-container .mask .send-redbag-wrap .main .redbag-type span {
@@ -4257,9 +4322,15 @@ body {
   cursor: pointer;
 }
 
+.near-container .mask .send-redbag-wrap .main .redbag-type span:nth-of-type(3) {
+  font-size: .6rem;
+  color: #c7c7c7;
+  padding: 0;
+}
+
 .near-container .mask .send-redbag-wrap .main .amount-money {
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: 2.2rem;
+  font-weight: 700;
   line-height: 5rem;
   text-align: center;
   overflow: hidden;    
@@ -4402,6 +4473,7 @@ body {
   width: 10rem;
   z-index: 999;
   padding: .2rem .4rem;
+  box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25);
 }
 
 .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login .login,
@@ -4413,6 +4485,7 @@ body {
   cursor: pointer;
   width: 100%;
   display: flex;
+  font-weight: 700;
   justify-content: center;
   align-items: center;
   border-radius: .7rem;
@@ -4427,6 +4500,32 @@ body {
   align-items: center;
   border-radius: .7rem;
   color: #e3c494;
+}
+
+.near-container .near-dapp-redpacket .near-redpacket-header .registerLogin {
+  align-items: center;
+  /* -webkit-animation: re-flip-btn 3s ease-in-out 1;
+  animation: re-flip-btn 3s ease-in-out 1; */
+  background: linear-gradient(45deg, #f0ce99 0, #e9b768 100%);
+  border: .1rem solid rgba(36, 36, 36, .1);
+  border-radius: 50%;
+  bottom: -4.5rem;
+  box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25);
+  color: rgba(36, 36, 36, .75);
+  display: flex;
+  font-weight: 700;
+  height: 5rem;
+  left: calc(50% - 2.5rem);
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 5rem;
+  z-index: 999;
+  flex-direction: column;
+  font-size: 1rem;
+  justify-content: center;
+  opacity: 1;
+  position: absolute;
 }
 
 .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-btn {

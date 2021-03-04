@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-01 19:42:25
+ * @LastEditTime: 2021-03-03 15:38:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -13,15 +13,19 @@
         <div class="cancel" @click="cancelQRCode"></div>
         <div class="main">
           <div class="title">
-            <h4>红包码</h4>
+            <div class="logo">
+              <img class="near-logo" src="../assets/near-logo.svg" alt="NEAR logo"/>
+            </div>
             <span>扫描二维码，接收红包</span>
           </div>
           <div class="qrccode-canvas-wrap">
             <div class="qrccode" ref="qrCodeUrl"></div>
           </div>
           <div class="url-wrap">
-            <div class="url-title">链接</div>
-            <div class="url">{{url}}</div>
+            <!-- <div class="url-title">链接</div> -->
+            <div class="url">
+              <div class="btn btn-primary" @click="doCopy">复制链接</div>
+            </div>
           </div>
         </div>
       </div>
@@ -58,6 +62,16 @@ export default {
     },
     cancelQRCode () {
       this.$parent.cancelQRCode()
+    },
+    doCopy () {
+      if (!this.url) return
+      this.$copyText(this.url)
+        .then(() => {
+          alert('复制成功')
+        })
+        .catch(() => {
+          alert('复制失败')
+        })
     }
   },
   mounted () {
