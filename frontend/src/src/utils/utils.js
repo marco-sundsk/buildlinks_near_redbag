@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-04 15:49:36
+ * @LastEditTime: 2021-03-04 20:48:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /swap/src/utils/utils.js
@@ -9,7 +9,7 @@
 import { connect, Contract, keyStores, WalletConnection } from 'near-api-js'
 import getConfig from './config'
 
-const nearConfig = getConfig(process.env.NODE_ENV || 'development')
+const nearConfig = getConfig(process.env.VUE_APP_NODE_ENV || 'development')
 
 // Initialize contract & set global variables
 export async function initContract () {
@@ -41,8 +41,8 @@ export async function initContract () {
       'revoke'
     ]
   })
-  window.baseUrl = 'http://47.242.35.20/redbag/'
-  window.nearConfig = getConfig(process.env.NODE_ENV || 'development')
+  window.baseUrl = process.env.VUE_APP_BASE_URL || 'http://47.242.35.20/redbag/'
+  window.nearConfig = getConfig(process.env.VUE_APP_NODE_ENV || 'development')
   window.near = near
 }
 
