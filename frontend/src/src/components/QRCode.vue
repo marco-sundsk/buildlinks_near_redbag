@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-05 19:10:54
+ * @LastEditTime: 2021-03-05 19:21:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -82,7 +82,7 @@ export default {
         }).catch((err) => {
           console.log(err)
         })
-      }, 1)
+      }, 2)
     },
     cancelQRCode () {
       this.$parent.cancelQRCode()
