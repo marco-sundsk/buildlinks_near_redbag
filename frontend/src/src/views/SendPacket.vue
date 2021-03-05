@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-04 15:46:20
+ * @LastEditTime: 2021-03-05 15:08:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit<
  * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
@@ -78,23 +78,27 @@ export default {
     }
   },
   methods: {
-    getSecretKeyByUrl () {
-      const key = this.$route.query.secretKey
-      return key
+    getKeyByUrl () {
+      const sKey = this.$route.query.secretKey
+      const pKey = this.$route.query.publicKey
+      return {
+        sKey: sKey,
+        pKey: pKey
+      }
     },
     async claim () {
       try {
         this.yesOrNo = true
         const account = this.getAccount()
-        const key = this.getSecretKeyByUrl()
-        if (!key) {
+        const { sKey } = this.getKeyByUrl()
+        if (!sKey) {
           this.$router.push('/')
           return
         }
         await window.walletConnection._keyStore.setKey(
           window.nearConfig.networkId,
           window.nearConfig.contractName,
-          KeyPair.fromString(key)
+          KeyPair.fromString(sKey)
         )
         const contract = await new Contract(
           account,
@@ -144,8 +148,8 @@ export default {
         this.loginState = 'register'
         this.registerBtnShow = false
         this.registerBtn = true
-        const secreKey = this.getSecretKeyByUrl()
-        const walletUrl = await this.getWalletLink(secreKey)
+        const { sKey } = this.getKeyByUrl()
+        const walletUrl = await this.getWalletLink(sKey)
         window.open(walletUrl)
       } catch (err) {
         console.error(err)
@@ -159,6 +163,23 @@ export default {
     const that = this
     initContract()
       .then(async () => {
+        try {
+          const { pKey } = that.getKeyByUrl()
+          const balance = await window.contract.get_key_balance({
+            key: pKey
+          })
+          if (Number(balance) === 0) {
+            this.loading = false
+            this.isLogin = true
+            this.errInfo = '已领完'
+            return
+          }
+        } catch (err) {
+          this.loading = false
+          this.isLogin = true
+          this.errInfo = '已领完'
+          return
+        }
         if (window.walletConnection.isSignedIn()) {
           that.isLogin = true
           await this.claim()

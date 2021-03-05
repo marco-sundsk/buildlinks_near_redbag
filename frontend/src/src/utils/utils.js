@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-04 20:48:14
+ * @LastEditTime: 2021-03-05 13:57:56
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /swap/src/utils/utils.js
@@ -32,7 +32,8 @@ export async function initContract () {
       'show_recv_list',
       'show_redbag_brief',
       'show_redbag_detail',
-      'show_statistic'
+      'show_statistic',
+      'get_key_balance'
     ],
     // Change methods can modify the state. But you don't receive the returned value when called.
     changeMethods: [

@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 11:37:19
- * @LastEditTime: 2021-03-04 15:17:55
+ * @LastEditTime: 2021-03-05 18:03:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/views/Home.vue
@@ -74,7 +74,7 @@
         </div>
       </div>
       <send-redbag v-show="sendRedBag"></send-redbag>
-      <q-r-code v-show="isQRCode" :url="url" ref="qrcode"></q-r-code>
+      <q-r-code v-show="isQRCode" :url="url" ref="qrcode" :qrInfo="qrInfo"></q-r-code>
       <redbag-info v-show="isRedbagInfo" :redbagInfo="redbagInfo" :redbagBrief="redbagBrief" :accountId="accountId"></redbag-info>
     </div>
   </div>
@@ -106,16 +106,18 @@ export default {
       isRedbagInfo: false,
       redbagBrief: '',
       statistic: {},
-      isLoading: true
+      isLoading: true,
+      qrInfo: ''
     }
   },
   methods: {
     showSendRedBag () {
       this.sendRedBag = !this.sendRedBag
     },
-    showQRCode (url) {
+    showQRCode (url, info) {
       this.isQRCode = true
       this.url = url
+      this.qrInfo = info
       this.$nextTick(() => {
         this.$refs.qrcode.createQrc()
       })

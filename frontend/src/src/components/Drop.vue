@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:53:52
- * @LastEditTime: 2021-03-04 13:45:13
+ * @LastEditTime: 2021-03-05 17:45:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
@@ -23,9 +23,11 @@
           <li class='tab-item' :class="{active: isActive === 'claimed'}" @click="changeActive('claimed')">接收</li>
         </ul>
       </div>
+      <div class="loading" v-if="publicLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
     <div>
       <div v-if="isActive === 'active'" class="near-drops">
-          <div v-if="activeList.length > 0" class="drop">
+        <div v-if="listLoading" class="loading"></div>
+          <div v-else-if="activeList.length > 0" class="drop">
               <div class="near-drop-item" v-for="(item, index) in activeList" :key="index" @click.stop="showRedbagInfo(item)">
                   <div class="drop-item-funds">
                     {{(item.balance - item.remaining_balance) | changeNear}} / {{item.balance | changeNear}}<small>Ⓝ</small>
@@ -45,7 +47,8 @@
       </div>
     </div>
       <div v-if="isActive === 'claimed'">
-        <div class="drop" v-if="claimedList.length > 0">
+        <div v-if="listLoading" class="loading"></div>
+        <div class="drop" v-else-if="claimedList.length > 0">
             <div class="near-drop-item" v-for="(item, index) in claimedList" :key="index" @click.stop="showRedbagInfo(item)">
                 <div class="drop-item-funds">{{item.balance | changeNear}} <small>Ⓝ</small></div>
                 <!-- <div class="drop-item-status"></div> -->
@@ -72,6 +75,7 @@ export default {
   },
   data () {
     return {
+      publicLoading: false,
       loading: true,
       isActive: 'active',
       activeList: [],
@@ -79,7 +83,8 @@ export default {
       nearTotal: '',
       shareAlert: false,
       revokeAlert: false,
-      currentPk: ''
+      currentPk: '',
+      listLoading: false
     }
   },
   computed: {
@@ -112,7 +117,15 @@ export default {
     showSendRedBag () {
       this.$parent.showSendRedBag()
     },
-    changeActive (type) {
+    async changeActive (type) {
+      if (type === 'active') {
+        this.listLoading = true
+        await this.getSendList()
+      } else {
+        this.listLoading = true
+        await this.getRecvList()
+      }
+      this.listLoading = false
       this.isActive = type
     },
     async getSendList () {
@@ -155,19 +168,31 @@ export default {
         console.error(err)
       }
     },
-    showUrlInfo (id) {
+    async showUrlInfo (id) {
       const secretKey = window.localStorage.getItem(id)
       if (secretKey) {
-        this.$parent.showQRCode(`${window.baseUrl}#/sendPacket?secretKey=${secretKey}`)
+        this.publicLoading = true
+        const info = await window.contract.show_redbag_detail({
+          public_key: id
+        })
+        this.publicLoading = false
+        this.$parent.showQRCode(`${window.baseUrl}#/sendPacket?secretKey=${secretKey}&publicKey=${id}`, info)
       } else {
         this.shareAlert = true
       }
     },
     async showRedbagInfo (item) {
-      const info = await window.contract.show_redbag_detail({
-        public_key: item.id
-      })
-      this.$parent.showRedbagInfo(info, item)
+      try {
+        this.publicLoading = true
+        const info = await window.contract.show_redbag_detail({
+          public_key: item.id
+        })
+        this.publicLoading = false
+        this.getSendList()
+        this.$parent.showRedbagInfo(info, item)
+      } catch (err) {
+        console.error(err)
+      }
     },
     // 撤销红包
     async revoke (id) {

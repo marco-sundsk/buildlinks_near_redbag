@@ -3275,23 +3275,23 @@ summary.accordion-header::-webkit-details-marker {
 
 @-webkit-keyframes slide-down {
   0% {
-    opacity: 0;
-    transform: translateY(-1.6rem);
+    /* transform: translateY(-1.6rem); */
+    display: none;
   }
   100% {
-    opacity: 1;
-    transform: translateY(0);
+    /* transform: translateY(0); */
+    display: block;
   }
 }
 
 @keyframes slide-down {
   0% {
-    opacity: 0;
-    transform: translateY(-1.6rem);
+    /* transform: translateY(-1.6rem); */
+    display: none;
   }
   100% {
-    opacity: 1;
-    transform: translateY(0);
+    /* transform: translateY(0); */
+    display: block;
   }
 }
 
@@ -4167,6 +4167,20 @@ body {
   height: 5rem;
   text-align: center;
   padding-top: 1rem;
+  white-space: nowrap;
+	text-overflow:ellipsis;
+	overflow: hidden;
+}
+
+.near-container .mask .qr-code .main {
+  position: relative;
+}
+
+.near-container .mask .qr-code .main .qr-img img{
+  width: 100%;
+  display: block;
+  /* margin: 0 auto; */
+  /* display: block; */
 }
 
 .near-container .mask .qr-code .main .title h4 {
@@ -4178,7 +4192,27 @@ body {
   color: #babbbc;
 }
 
-.near-container .mask .qr-code .main .qrccode-canvas-wrap{
+.near-container .mask .qr-code .footer {
+  text-align: center;
+  white-space: nowrap;
+	text-overflow:ellipsis;
+	overflow: hidden;
+  width: 100%;
+  padding-top: .3rem;
+  padding-bottom: .3rem;
+  /* position: absolute; */
+  /* bottom: 3.5rem;
+  padding: 0 3rem;
+  left: 50%;
+  transform: translateX(-50%); */
+}
+
+.near-container .mask .qr-code .footer span {
+  size: .7rem;
+  color: #babbbc;
+}
+
+.near-container .mask .qr-code .main .qrccode-canvas-wrap {
   display: flex;
   width: 100%;
   max-width: 10rem;
@@ -4187,22 +4221,30 @@ body {
   /* padding-top: 2rem; */
 }
 
+/* .near-container .mask .qr-code .main .qr-wrap {
+  padding: 0 1rem;
+} */
+
 .near-container .mask .qr-code .main .qrccode-canvas-wrap .qrccode img {
-  width: 100%;
-  height: 100%;
+  display: block;
 }
 
-.near-container .mask .qr-code .main .url-wrap {
-  padding-top: 1rem;
+.near-container .mask .qr-code .url-wrap {
+  position: absolute;
+  bottom: 1.4rem;
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  /* padding-top: 1rem; */
   text-align: center;
 }
 
-.near-container .mask .qr-code .main .url-wrap .url-title {
+.near-container .mask .qr-code .url-wrap .url-title {
   font-size: .6rem;
   color: #babbbc;
 }
 
-.near-container .mask .qr-code .main .url-wrap .url .btn{
+.near-container .mask .qr-code .url-wrap .url .btn{
   width: 100%;
   max-width: 10rem;
   display: flex;
