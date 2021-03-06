@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 11:37:19
- * @LastEditTime: 2021-03-05 18:03:40
+ * @LastEditTime: 2021-03-06 14:04:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/views/Home.vue
@@ -27,7 +27,7 @@
                   </li> -->
                   <!-- <li class="divider"></li> -->
                   <li class="menu-item">
-                    <a @click="goWallet('https://wallet.near.org')">
+                    <a @click="goWallet()">
                       NEAR Wallet
                     </a>
                   </li>
@@ -74,7 +74,7 @@
         </div>
       </div>
       <send-redbag v-show="sendRedBag"></send-redbag>
-      <q-r-code v-show="isQRCode" :url="url" ref="qrcode" :qrInfo="qrInfo"></q-r-code>
+      <q-r-code v-show="isQRCode" :url="url" ref="qrcode"></q-r-code>
       <redbag-info v-show="isRedbagInfo" :redbagInfo="redbagInfo" :redbagBrief="redbagBrief" :accountId="accountId"></redbag-info>
     </div>
   </div>
@@ -106,18 +106,16 @@ export default {
       isRedbagInfo: false,
       redbagBrief: '',
       statistic: {},
-      isLoading: true,
-      qrInfo: ''
+      isLoading: true
     }
   },
   methods: {
     showSendRedBag () {
       this.sendRedBag = !this.sendRedBag
     },
-    showQRCode (url, info) {
+    showQRCode (url) {
       this.isQRCode = true
       this.url = url
-      this.qrInfo = info
       this.$nextTick(() => {
         this.$refs.qrcode.createQrc()
       })
@@ -147,8 +145,8 @@ export default {
       const statistic = await window.contract.show_statistic()
       this.statistic = statistic
     },
-    goWallet (url) {
-      window.open(url)
+    goWallet () {
+      window.open(window.nearConfig.walletUrl)
     }
   },
   filters: {

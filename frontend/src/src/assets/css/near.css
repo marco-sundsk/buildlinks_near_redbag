@@ -4174,13 +4174,15 @@ body {
 
 .near-container .mask .qr-code .main {
   position: relative;
+  padding-bottom: 1rem;
+  /* padding: 0 1rem; */
 }
 
 .near-container .mask .qr-code .main .qr-img img{
   width: 100%;
   display: block;
-  /* margin: 0 auto; */
-  /* display: block; */
+  /* margin: 0 auto;
+  display: block; */
 }
 
 .near-container .mask .qr-code .main .title h4 {
@@ -4221,9 +4223,9 @@ body {
   /* padding-top: 2rem; */
 }
 
-/* .near-container .mask .qr-code .main .qr-wrap {
-  padding: 0 1rem;
-} */
+.near-container .mask .qr-code .main .qr-wrap {
+  padding-bottom: 2rem;
+}
 
 .near-container .mask .qr-code .main .qrccode-canvas-wrap .qrccode img {
   display: block;

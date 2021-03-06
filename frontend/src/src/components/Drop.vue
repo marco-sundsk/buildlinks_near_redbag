@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:53:52
- * @LastEditTime: 2021-03-05 17:45:25
+ * @LastEditTime: 2021-03-06 12:52:49
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
@@ -171,12 +171,7 @@ export default {
     async showUrlInfo (id) {
       const secretKey = window.localStorage.getItem(id)
       if (secretKey) {
-        this.publicLoading = true
-        const info = await window.contract.show_redbag_detail({
-          public_key: id
-        })
-        this.publicLoading = false
-        this.$parent.showQRCode(`${window.baseUrl}#/sendPacket?secretKey=${secretKey}&publicKey=${id}`, info)
+        this.$parent.showQRCode(`${window.baseUrl}#/sendPacket?secretKey=${secretKey}&publicKey=${id}`)
       } else {
         this.shareAlert = true
       }

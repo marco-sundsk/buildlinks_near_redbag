@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-05 15:08:17
+ * @LastEditTime: 2021-03-06 14:02:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit<
  * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
@@ -145,6 +145,7 @@ export default {
     },
     async register () {
       try {
+        window.localStorage.setItem('isRegister', true)
         this.loginState = 'register'
         this.registerBtnShow = false
         this.registerBtn = true
@@ -185,6 +186,12 @@ export default {
           await this.claim()
           that.loading = false
         } else {
+          if (window.localStorage.getItem('isRegister')) {
+            window.localStorage.removeItem('isRegister')
+            that.loginState = 'register'
+            that.registerBtnShow = false
+            that.registerBtn = true
+          }
           that.isLogin = false
           that.loading = false
         }

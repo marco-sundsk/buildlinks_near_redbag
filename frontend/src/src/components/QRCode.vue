@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-05 19:21:49
+ * @LastEditTime: 2021-03-06 12:51:59
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -17,13 +17,10 @@
               <div class="logo">
                 <img class="near-logo" src="../assets/near-logo.svg" alt="NEAR logo"/>
               </div>
-              <span>扫描二维码，接收{{qrInfo.owner}}的红包</span>
+              <span>扫描二维码，接收红包</span>
             </div>
             <div class="qrccode-canvas-wrap">
               <div class="qrccode" ref="qrCodeUrl"></div>
-            </div>
-            <div class="footer">
-              <span>{{qrInfo.slogan}}</span>
             </div>
           </div>
           <div class="qr-img" ref="qrImg"></div>
@@ -52,9 +49,6 @@ export default {
     url: {
       type: String,
       require: true
-    },
-    qrInfo: {
-      require: true
     }
   },
   methods: {
@@ -73,16 +67,18 @@ export default {
         colorLight: '#fafafa',
         correctLevel: QRCode.CorrectLevel.M
       })
-      setTimeout(() => {
-        html2canvas(this.$refs.qrWrap).then(canvas => {
-          const oImg = new Image()
-          oImg.src = canvas.toDataURL()
-          this.$refs.qrWrap.style.display = 'none'
-          this.$refs.qrImg.appendChild(oImg)
-        }).catch((err) => {
-          console.log(err)
-        })
-      }, 2)
+      this.$nextTick(() => {
+        setTimeout(() => {
+          html2canvas(this.$refs.qrWrap).then(canvas => {
+            const oImg = new Image()
+            oImg.src = canvas.toDataURL()
+            this.$refs.qrWrap.style.display = 'none'
+            this.$refs.qrImg.appendChild(oImg)
+          }).catch((err) => {
+            console.log(err)
+          })
+        }, 100)
+      })
     },
     cancelQRCode () {
       this.$parent.cancelQRCode()
