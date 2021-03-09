@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-09 14:54:45
+ * @LastEditTime: 2021-03-09 15:30:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -69,14 +69,18 @@ export default {
       })
       this.$nextTick(() => {
         setTimeout(() => {
-          html2canvas(this.$refs.qrWrap).then(canvas => {
-            const oImg = new Image()
-            oImg.src = canvas.toDataURL()
-            this.$refs.qrWrap.style.display = 'none'
-            this.$refs.qrImg.appendChild(oImg)
-          }).catch((err) => {
-            console.error(err)
-          })
+          const opts = {
+            useCORS: true // 【重要】开启跨域配置
+          }
+          html2canvas(this.$refs.qrWrap, opts)
+            .then(canvas => {
+              const oImg = new Image()
+              oImg.src = canvas.toDataURL()
+              this.$refs.qrWrap.style.display = 'none'
+              this.$refs.qrImg.appendChild(oImg)
+            }).catch((err) => {
+              console.error(err)
+            })
         }, 100)
       })
     },
