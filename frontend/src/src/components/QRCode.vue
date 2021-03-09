@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-09 14:37:20
+ * @LastEditTime: 2021-03-09 14:54:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -59,7 +59,7 @@ export default {
         this.$refs.qrCodeUrl.innerText = ''
       }
       if (!this.url) return
-      this.qrcode = new QRCode(this.$refs.qrCodeUrl, {
+      this.qrcode = await new QRCode(this.$refs.qrCodeUrl, {
         text: this.url,
         width: 200,
         height: 200,
@@ -77,7 +77,7 @@ export default {
           }).catch((err) => {
             console.error(err)
           })
-        }, 500)
+        }, 100)
       })
     },
     cancelQRCode () {

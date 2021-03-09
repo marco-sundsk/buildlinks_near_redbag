@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-02-26 11:40:39
- * @LastEditTime: 2021-03-09 12:22:38
+ * @LastEditTime: 2021-03-09 15:14:10
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/vue.config.js

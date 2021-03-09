@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-09 14:36:55
+ * @LastEditTime: 2021-03-09 15:12:06
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit<
  * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
@@ -129,7 +129,7 @@ export default {
     },
     login () {
       if (this.loginState === 'login') {
-        login()
+        login('claimed')
       } else {
         this.$router.push({
           name: 'Index',
@@ -157,7 +157,7 @@ export default {
   },
   created () {
     const { sKey, pKey } = this.getKeyByUrl()
-    if (!sKey || !pKey) {
+    if (!sKey) {
       this.$router.push('/')
       return
     }

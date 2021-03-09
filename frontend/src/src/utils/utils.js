@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-05 13:57:56
+ * @LastEditTime: 2021-03-09 14:58:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /swap/src/utils/utils.js
@@ -54,9 +54,15 @@ export function logout () {
 }
 
 export function login (query = 'active') {
+  let url = null
+  if (query === 'active') {
+    url = `${window.baseUrl}?active=${query}`
+  } else {
+    url = null
+  }
   // Allow the current app to make calls to the specified contract on the
   // user's behalf.
   // This works by creating a new access key for the user's account and storing
   // the private key in localStorage.
-  window.walletConnection.requestSignIn(nearConfig.contractName, 'NEAR redbag', `${window.baseUrl}?active=${query}`)
+  window.walletConnection.requestSignIn(nearConfig.contractName, 'NEAR redbag', url)
 }
