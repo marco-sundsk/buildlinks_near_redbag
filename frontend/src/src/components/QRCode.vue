@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-06 12:51:59
+ * @LastEditTime: 2021-03-08 10:24:16
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
@@ -75,7 +75,7 @@ export default {
             this.$refs.qrWrap.style.display = 'none'
             this.$refs.qrImg.appendChild(oImg)
           }).catch((err) => {
-            console.log(err)
+            console.error(err)
           })
         }, 100)
       })

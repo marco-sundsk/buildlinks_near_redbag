@@ -1,12 +1,18 @@
 /*
  * @Author: your name
  * @Date: 2021-01-08 17:10:49
- * @LastEditTime: 2021-03-04 20:44:55
+ * @LastEditTime: 2021-03-09 12:21:52
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /near-swap-front/src/utils/config.js
  */
 const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME || 'rb01.testnet'
+const MAINNET_CONTRACT_NAME = process.env.VUE_APP_MAINNET_CONTRACT_NAME || 'biudrops.near'
+const MAINNET_WALLET_URL = process.env.VUE_APP_MAINNET_WALLET_URL || 'https://near-wallet.buildlinks.org'
+const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || 'https://rpc.mainnet.near.org'
+const TESTNET_CONTRACT_NAME = process.env.VUE_APP_TESTNET_CONTRACT_NAME || 'rb01.testnet'
+const TESTNET_WALLET_URL = process.env.VUE_APP_TESTNET_WALLET_URL || 'http://47.242.35.20'
+const TESTNET_NODE_URL = process.env.VUE_APP_TESTNET_NODE_URL || 'https://rpc.testnet.near.org'
 
 function getConfig (env) {
   switch (env) {
@@ -14,9 +20,9 @@ function getConfig (env) {
     case 'mainnet':
       return {
         networkId: 'mainnet',
-        nodeUrl: 'https://rpc.mainnet.near.org',
-        contractName: CONTRACT_NAME,
-        walletUrl: 'https://near-wallet.buildlinks.org',
+        nodeUrl: MAINNET_NODE_URL,
+        contractName: MAINNET_CONTRACT_NAME,
+        walletUrl: MAINNET_WALLET_URL,
         helperUrl: 'https://helper.mainnet.near.org',
         explorerUrl: 'https://explorer.mainnet.near.org'
       }
@@ -24,9 +30,9 @@ function getConfig (env) {
     case 'testnet':
       return {
         networkId: 'testnet',
-        nodeUrl: 'https://rpc.testnet.near.org',
-        contractName: CONTRACT_NAME,
-        walletUrl: 'http://47.242.35.20',
+        nodeUrl: TESTNET_NODE_URL,
+        contractName: TESTNET_CONTRACT_NAME,
+        walletUrl: TESTNET_WALLET_URL,
         helperUrl: 'https://helper.testnet.near.org',
         explorerUrl: 'https://explorer.testnet.near.org'
       }

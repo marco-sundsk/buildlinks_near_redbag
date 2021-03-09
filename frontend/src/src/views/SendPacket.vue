@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-06 14:02:40
+ * @LastEditTime: 2021-03-09 10:42:32
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit<
  * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
@@ -90,11 +90,6 @@ export default {
       try {
         this.yesOrNo = true
         const account = this.getAccount()
-        const { sKey } = this.getKeyByUrl()
-        if (!sKey) {
-          this.$router.push('/')
-          return
-        }
         await window.walletConnection._keyStore.setKey(
           window.nearConfig.networkId,
           window.nearConfig.contractName,
@@ -161,6 +156,11 @@ export default {
     }
   },
   created () {
+    const { sKey, pKey } = this.getKeyByUrl()
+    if (!sKey || !pKey) {
+      this.$router.push('/')
+      return
+    }
     const that = this
     initContract()
       .then(async () => {

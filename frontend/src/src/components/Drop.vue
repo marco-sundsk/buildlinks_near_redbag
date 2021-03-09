@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2021-02-26 13:53:52
- * @LastEditTime: 2021-03-06 12:52:49
+ * @LastEditTime: 2021-03-09 11:24:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
@@ -23,7 +23,9 @@
           <li class='tab-item' :class="{active: isActive === 'claimed'}" @click="changeActive('claimed')">接收</li>
         </ul>
       </div>
-      <div class="loading" v-if="publicLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+      <div v-if="publicLoading" class="loading-wrap" style="position: fixed; width: 100%; height: 100%; left: 0; top: 0; z-index: 999;">
+        <div class="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+      </div>
     <div>
       <div v-if="isActive === 'active'" class="near-drops">
         <div v-if="listLoading" class="loading"></div>
@@ -192,15 +194,15 @@ export default {
     // 撤销红包
     async revoke (id) {
       try {
-        this.loading = true
+        this.publicLoading = true
         await window.contract.revoke({
           public_key: id
         })
-        this.loading = false
+        await this.getSendList()
+        this.publicLoading = false
       } catch (err) {
         console.error(err)
       }
-      this.getSendList()
     }
   },
   filters: {
