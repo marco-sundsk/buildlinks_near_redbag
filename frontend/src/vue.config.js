@@ -1,13 +1,13 @@
 /*
  * @Author: your name
  * @Date: 2021-02-26 11:40:39
- * @LastEditTime: 2021-03-09 15:32:01
+ * @LastEditTime: 2021-03-09 20:11:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /buildlinks-near-redbag/vue.config.js
  */
 const path = require('path')// 引入path模块
-const publicPath = '/'
+const publicPath = process.env.VUE_APP_PUBLIC_PATH || '/'
 function resolve (dir) {
   return path.join(__dirname, dir)// path.join(__dirname)设置绝对路径
 }

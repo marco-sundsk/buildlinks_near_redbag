@@ -6,8 +6,9 @@
  * @Description: In User Settings Edit
  * @FilePath: /swap/src/utils/utils.js
  */
-import { connect, Contract, keyStores, WalletConnection } from 'near-api-js'
+import { connect, Contract, keyStores } from 'near-api-js'
 import getConfig from './config'
+import * as nearApi from 'near-api-js'
 
 const nearConfig = getConfig(process.env.VUE_APP_NODE_ENV || 'development')
 
@@ -18,8 +19,22 @@ export async function initContract () {
 
   // Initializing Wallet based Account. It can work with NEAR testnet wallet that
   // is hosted at https://wallet.testnet.near.org
-  window.walletConnection = new WalletConnection(near)
+  // window.walletConnection = new WalletConnection(near)
   // window.wallet = new nearApi.WalletConnection(window.near)
+  window.getCurrentUser = async () => {
+    // Needed to access wallet
+    window.walletConnection = new nearApi.WalletConnection(near)
+    window.walletAccount = new nearApi.WalletAccount(near)
+    if (window.walletConnection.getAccountId()) {
+      const accountId = window.walletConnection.getAccountId()
+      window.currentUser = {
+        accountId,
+        account_id: accountId,
+        balance: (await window.walletConnection.account().state()).amount
+      }
+    }
+  }
+  await window.getCurrentUser()
 
   // Getting the Account ID. If still unauthorized, it's just empty string
   window.accountId = window.walletConnection.getAccountId()

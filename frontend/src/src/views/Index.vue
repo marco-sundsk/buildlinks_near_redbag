@@ -17,7 +17,7 @@
             <div v-if="isLogin" class="dropdown dropdown-right" tabIndex="0">
                 <div class="btn">
                   <img class="btn-icon" src="../assets/img/icon-account.svg" alt="NEAR user" height="40" />
-                  <span class="text-ellipsis">{{accountId}}</span>
+                  <span class="text-ellipsis">{{currentUser.account_id}}</span>
                 </div>
                 <ul class="menu">
                   <!-- <li class="menu-item">
@@ -42,7 +42,7 @@
       </div>
       <div class="near-dapp-body">
         <div>
-          <drop v-if="isLogin"></drop>
+          <drop v-if="isLogin" :currentUser="currentUser"></drop>
           <div v-else-if="isLoading" class="loading"></div>
           <div v-else class="empty">
               <div class="empty-icon">🧧</div>
@@ -75,7 +75,7 @@
       </div>
       <send-redbag v-show="sendRedBag"></send-redbag>
       <q-r-code v-show="isQRCode" :url="url" ref="qrcode"></q-r-code>
-      <redbag-info v-show="isRedbagInfo" :redbagInfo="redbagInfo" :redbagBrief="redbagBrief" :accountId="accountId"></redbag-info>
+      <redbag-info v-show="isRedbagInfo" :redbagInfo="redbagInfo" :redbagBrief="redbagBrief" :accountId="currentUser.account_id"></redbag-info>
     </div>
   </div>
 </template>
@@ -99,7 +99,7 @@ export default {
     return {
       sendRedBag: false,
       isLogin: false,
-      accountId: '',
+      currentUser: '',
       isQRCode: false,
       url: '',
       redbagInfo: '',
@@ -131,6 +131,7 @@ export default {
       }
     },
     requestSignOut () {
+      this.currentUser = ''
       logout()
     },
     showRedbagInfo (info, item) {
@@ -147,6 +148,10 @@ export default {
     },
     goWallet () {
       window.open(window.nearConfig.walletUrl)
+    },
+    async updateUser () {
+      await window.getCurrentUser()
+      this.currentUser = window.currentUser
     }
   },
   filters: {
@@ -161,7 +166,7 @@ export default {
       .then(async () => {
         if (window.walletConnection.isSignedIn()) {
           that.isLogin = true
-          that.accountId = window.accountId
+          that.currentUser = window.currentUser
         } else {
           await that.getStatistic()
           that.isLoading = false

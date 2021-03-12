@@ -12,7 +12,7 @@
     <div v-else>
       <div class="near-balance">
         <div class="near-balance-title">余额</div>
-        <div class="near-balance-funds">{{nearTotal | changeNear}} <small>Ⓝ</small></div>
+        <div class="near-balance-funds">{{currentUser.balance | changeNear}} <small>Ⓝ</small></div>
         <div class="near-balance-actions">
           <button class="btn btn-primary" @click="showSendRedBag">+点击创建红包</button>
         </div>
@@ -82,11 +82,15 @@ export default {
       isActive: 'active',
       activeList: [],
       claimedList: [],
-      nearTotal: '',
       shareAlert: false,
       revokeAlert: false,
       currentPk: '',
       listLoading: false
+    }
+  },
+  props: {
+    currentUser: {
+      require: true
     }
   },
   computed: {
@@ -162,14 +166,6 @@ export default {
       if (r != null) return unescape(r[2])
       return null
     },
-    async getNearTotal () {
-      try {
-        const { total } = await window.walletConnection.account().getAccountBalance()
-        this.nearTotal = total
-      } catch (err) {
-        console.error(err)
-      }
-    },
     async showUrlInfo (id) {
       const secretKey = window.localStorage.getItem(id)
       if (secretKey) {
@@ -199,6 +195,7 @@ export default {
           public_key: id
         })
         await this.getSendList()
+        await this.$parent.updateUser()
         this.publicLoading = false
       } catch (err) {
         console.error(err)
@@ -217,7 +214,6 @@ export default {
     }
     await this.getSendList()
     await this.getRecvList()
-    await this.getNearTotal()
     this.loading = false
   }
 }
