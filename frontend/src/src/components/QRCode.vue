@@ -52,14 +52,14 @@ export default {
     }
   },
   methods: {
-    async createQrc () {
+    createQrc () {
       this.$refs.qrWrap.style.display = 'block'
       this.$refs.qrImg.innerText = ''
       if (this.qrcode) {
         this.$refs.qrCodeUrl.innerText = ''
       }
       if (!this.url) return
-      this.qrcode = await new QRCode(this.$refs.qrCodeUrl, {
+      this.qrcode = new QRCode(this.$refs.qrCodeUrl, {
         text: this.url,
         width: 200,
         height: 200,
@@ -70,7 +70,7 @@ export default {
       this.$nextTick(() => {
         setTimeout(() => {
           const opts = {
-            useCORS: true // 【重要】开启跨域配置
+            useCORS: true
           }
           html2canvas(this.$refs.qrWrap, opts)
             .then(canvas => {
