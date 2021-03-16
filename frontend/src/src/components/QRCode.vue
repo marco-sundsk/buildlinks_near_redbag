@@ -15,7 +15,7 @@
           <div class="qr-wrap" style="display: block; background-color: #fafafa;" ref="qrWrap">
             <div class="title">
               <div class="logo">
-                <img class="near-logo" src="../assets/near-logo.svg" alt="NEAR logo"/>
+                <img class="near-logo" :src="nearLogo" crossorigin="anonymous" alt="NEAR logo"/>
               </div>
               <span>扫描二维码，接收红包</span>
             </div>
@@ -49,6 +49,11 @@ export default {
     url: {
       type: String,
       require: true
+    }
+  },
+  computed: {
+    nearLogo () {
+      return require('../assets/near-logo.svg') + '?ts=' + new Date().getTime()
     }
   },
   methods: {

@@ -3999,6 +3999,7 @@ body {
   display: flex;
   justify-content: center;
   padding-top: 2rem;
+  align-items: flex-start;
   /* align-items: center; */
   top: 0;
   left: 0;
@@ -4009,7 +4010,7 @@ body {
 .near-container .mask .redbag-alert {
   width: 85%;
   max-width: 20rem;
-  height: 8.5rem;
+  /* max-height: 10rem; */
   background-color: #fafafa;
   border-radius: .8rem;
   box-shadow: .0rem .0rem .4rem rgb(78, 77, 77);
