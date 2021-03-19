@@ -73,7 +73,7 @@
             </div>
         </div>
       </div>
-      <send-redbag v-show="sendRedBag"></send-redbag>
+      <send-redbag v-show="sendRedBag" :currentUser="currentUser"></send-redbag>
       <q-r-code v-show="isQRCode" :url="url" ref="qrcode"></q-r-code>
       <redbag-info v-show="isRedbagInfo" :redbagInfo="redbagInfo" :redbagBrief="redbagBrief" :accountId="currentUser.account_id"></redbag-info>
     </div>
@@ -132,7 +132,14 @@ export default {
     },
     requestSignOut () {
       this.currentUser = ''
+      setTimeout(this.signedOutFlow, 500)
       logout()
+    },
+    signedOutFlow () {
+      if (window.location.search.includes('account_id')) {
+        console.log(window.location.origin + window.location.pathname)
+        window.location.replace(window.location.origin + window.location.pathname)
+      }
     },
     showRedbagInfo (info, item) {
       this.isRedbagInfo = true

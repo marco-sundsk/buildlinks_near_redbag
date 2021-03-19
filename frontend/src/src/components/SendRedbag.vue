@@ -71,8 +71,12 @@ export default {
       redbagCount: '',
       redbagTitle: '',
       pin: require('../assets/img/icon07.png'),
-      pu: require('../assets/img/icon11.png'),
-      nearTotal: ''
+      pu: require('../assets/img/icon11.png')
+    }
+  },
+  props: {
+    currentUser: {
+      require: true
     }
   },
   computed: {
@@ -98,14 +102,14 @@ export default {
       }
     },
     showButton () {
-      if (this.money && this.redbagCount && this.totalMoney <= this.nearTotal) {
+      if (this.money && this.redbagCount && this.totalMoney <= (this.currentUser.balance / 1e24)) {
         return true
       } else {
         return false
       }
     },
     showNoButton () {
-      if (this.totalMoney <= this.nearTotal) {
+      if (this.totalMoney <= (this.currentUser.balance / 1e24)) {
         return false
       } else {
         return true
@@ -142,10 +146,6 @@ export default {
         return num + ratio
       }
     },
-    async getNearTotal () {
-      const { total } = await window.walletConnection.account().getAccountBalance()
-      this.nearTotal = (total / 1e24)
-    },
     async sendRedbag () {
       try {
         const { publicKey, secretKey } = this.getKeyPair()
@@ -169,7 +169,6 @@ export default {
       .then(async () => {
         if (window.walletConnection.isSignedIn()) {
           that.getKeyPair()
-          that.getNearTotal()
         }
       })
       .catch(console.error)
