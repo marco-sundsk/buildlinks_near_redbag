@@ -7,9 +7,9 @@
  * @FilePath: /near-swap-front/src/utils/config.js
  */
 const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME || 'rb01.testnet'
-const MAINNET_CONTRACT_NAME = process.env.VUE_APP_MAINNET_CONTRACT_NAME || 'biudrops.near'
+const MAINNET_CONTRACT_NAME = process.env.VUE_APP_MAINNET_CONTRACT_NAME || 'biudrop.near'
 const MAINNET_WALLET_URL = process.env.VUE_APP_MAINNET_WALLET_URL || 'https://near-wallet.buildlinks.org'
-const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || 'https://rpc.mainnet.near.org'
+const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || 'https://near-rpc.buildlinks.org'
 const TESTNET_CONTRACT_NAME = process.env.VUE_APP_TESTNET_CONTRACT_NAME || 'rb01.testnet'
 const TESTNET_WALLET_URL = process.env.VUE_APP_TESTNET_WALLET_URL || 'http://47.242.35.20'
 const TESTNET_NODE_URL = process.env.VUE_APP_TESTNET_NODE_URL || 'https://rpc.testnet.near.org'
