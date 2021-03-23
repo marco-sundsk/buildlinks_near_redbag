@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2021-02-26 13:53:52
- * @LastEditTime: 2021-03-09 13:48:22
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /buildlinks-near-redbag/src/components/Drops.vue
--->
 <template>
   <div>
     <div class="loading" v-if="loading"></div>

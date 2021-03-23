@@ -13,6 +13,7 @@ import '@/assets/css/near.css'
 import { initContract } from './utils/utils'
 import moment from 'moment'
 import VueClipboard from 'vue-clipboard2'
+import 'vue-flipper/dist/vue-flipper.css'
 
 Vue.use(VueClipboard)
 Vue.config.productionTip = false

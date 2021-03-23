@@ -4501,32 +4501,52 @@ body {
 }
 
 .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login {
-  align-items: center;
+  /* align-items: center;
   background-color: #e3c494;
   bottom: -3.5rem;
   display: flex;
   flex-direction: column;
   font-size: 1rem;
   font-weight: 400;
-  height: 3.8rem;
-  justify-content: center;
+  height: 4.3rem;
+  justify-content: space-around;
   left: calc(50% - 5rem);
   border-radius: .5rem;
   opacity: 1;
   position: absolute;
-  /* -webkit-user-select */
   width: 10rem;
   z-index: 999;
   padding: .2rem .4rem;
-  box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25);
+  box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25); */
+
+  align-items: center;
+  /* -webkit-animation: re-flip-btn 3s ease-in-out 1;
+  animation: re-flip-btn 3s ease-in-out 1; */
+  /* background: linear-gradient(45deg, #f0ce99 0, #e9b768 100%); */
+  /* border: .1rem solid rgba(36, 36, 36, .1); */
+  /* border-radius: 50%; */
+  bottom: -4.5rem;
+  /* box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25); */
+  color: rgba(36, 36, 36, .75);
+  display: flex;
+  font-size: 1.2rem;
+  font-weight: 700;
+  height: 5rem;
+  justify-content: center;
+  align-items: center;
+  left: calc(50% - 2.5rem);
+  /* opacity: 0; */
+  position: absolute;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 5rem;
+  z-index: 999;
 }
 
 .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login .login,
 .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login .register {
-  /* background-color: #c73e36; */
-  /* font-size: .9rem; */
-  /* padding: .5rem; */
-  /* margin-bottom: .2rem; */
+  /* padding: 3px 0;
   cursor: pointer;
   width: 100%;
   display: flex;
@@ -4535,17 +4555,44 @@ body {
   align-items: center;
   border-radius: .7rem;
   color: #da2c25;
+  text-shadow: 1px 1px 2px rgb(153, 152, 152); */
+
+  align-items: center;
+  /* -webkit-animation: re-flip-btn 3s ease-in-out 1;
+  animation: re-flip-btn 3s ease-in-out 1; */
+  background: linear-gradient(45deg, #f0ce99 0, #e9b768 100%);
+  border: .1rem solid rgba(36, 36, 36, .1);
+  border-radius: 50%;
+  /* bottom: -4.5rem; */
+  box-shadow: 0 .2rem 1rem rgba(36, 36, 36, .25);
+  color: rgba(36, 36, 36, .75);
+  display: flex;
+  font-size: 1.2rem;
+  font-weight: 700;
+  height: 5rem;
+  justify-content: center;
+  align-items: center;
+  left: calc(50% - 2.5rem);
+  /* opacity: 0; */
+  position: absolute;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  width: 5rem;
+  z-index: 999;
 }
 
-.near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login .active {
+/* .near-container .near-dapp-redpacket .near-redpacket-header .redpacket-login .active {
   background-color: #da2c25;
+  box-shadow: 0px 0px 3px 1px rgb(136, 136, 136);
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: .7rem;
+  border-radius: 1rem;
   color: #e3c494;
-}
+  text-shadow: none;
+} */
 
 .near-container .near-dapp-redpacket .near-redpacket-header .registerLogin {
   align-items: center;

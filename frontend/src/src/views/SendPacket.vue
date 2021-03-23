@@ -14,8 +14,14 @@
           <img class="redpacket-cover" src="../assets/img/redpacket-cover.svg" alt="" />
           <button class="redpacket-btn" :style="animationBtn">拆封</button>
           <div class="redpacket-login" :class="{registerLogin: !registerBtnShow}" v-if="!isLogin">
-            <div class="login" :class="{active: registerBtnShow}" @click="login">{{loginText}}</div>
-            <div v-if="registerBtnShow" class="register" @click="register">注册Near账户</div>
+            <flipper
+              :flipped="flipped"
+              @mousedown="onMouse($event)"
+              @touchstart="onTouch($event)"
+            >
+              <div slot="front" class="login" :class="{active: registerBtnShow}" @click="login" >{{loginText}}</div>
+              <div slot="back" v-if="registerBtnShow" class="register" @click="register">注册</div>
+            </flipper>
           </div>
         </div>
         <div class="near-redpacket-body">
@@ -49,18 +55,23 @@
 <script>
 import { initContract, login } from '../utils/utils.js'
 import { KeyPair, Account, Contract } from 'near-api-js'
+import Flipper from 'vue-flipper'
 export default {
   name: 'SendPacket',
+  components: {
+    Flipper
+  },
   data () {
     return {
       isLogin: false,
       drawMoney: '',
-      loading: true,
+      loading: false,
       yesOrNo: false,
       registerBtn: false,
       errInfo: '',
       loginState: 'login',
-      registerBtnShow: true
+      registerBtnShow: true,
+      flipped: false
     }
   },
   computed: {
@@ -74,10 +85,38 @@ export default {
       return this.isLogin ? '-webkit-animation: re-slide-down 3s ease-in-out 1 forwards;' : ''
     },
     loginText () {
-      return this.registerBtnShow ? '已有账户登录' : '登录'
+      return this.registerBtnShow ? '登录' : '登录'
     }
   },
   methods: {
+    onTouch (e) {
+      let flag = true
+      e.target.ontouchmove = () => {
+        if (flag) {
+          this.flipped = !this.flipped
+          flag = false
+        }
+      }
+      e.target.ontouchend = () => {
+        flag = false
+        e.target.ontouchmove = null
+        e.target.ontouchend = null
+      }
+    },
+    onMouse (e) {
+      let flag = true
+      e.target.onmousemove = () => {
+        if (flag) {
+          this.flipped = !this.flipped
+          flag = false
+        }
+      }
+      e.target.onmouseup = () => {
+        flag = false
+        e.target.onmousemove = null
+        e.target.onmouseup = null
+      }
+    },
     getKeyByUrl () {
       const sKey = this.$route.query.secretKey
       const pKey = this.$route.query.publicKey
@@ -142,6 +181,9 @@ export default {
     async register () {
       try {
         this.loginState = 'register'
+        this.flipped = !this.flipped
+        this.onMouse = () => {}
+        this.onTouch = () => {}
         this.registerBtnShow = false
         this.registerBtn = true
         const { sKey } = this.getKeyByUrl()
@@ -187,6 +229,14 @@ export default {
         } else {
           that.isLogin = false
           that.loading = false
+          this.$nextTick(() => {
+            const interId = setInterval(() => {
+              this.flipped = !this.flipped
+            }, 500)
+            setTimeout(() => {
+              clearInterval(interId)
+            }, 1200)
+          })
         }
       })
       .catch(console.error)
