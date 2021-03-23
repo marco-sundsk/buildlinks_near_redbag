@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2021-02-26 13:47:40
- * @LastEditTime: 2021-03-09 15:12:06
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit<
- * @FilePath: /buildlinks-near-redbag/src/views/SendPacket.vue
--->
 <template>
   <div class="near-container">
     <div class="near-dapp loading" v-if="loading"></div>
