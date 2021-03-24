@@ -91,16 +91,6 @@ export default {
           alert('复制失败')
         })
     },
-    getBase64Image (img) {
-      var canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      var ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, img.width, img.height)
-      var ext = img.src.substring(img.src.lastIndexOf('.') +1).toLowerCase()
-      var dataURL = canvas.toDataURL('image/' + ext)
-      return dataURL
-    },
     createImg () {
       if (this.logoFlag) {
         var img = this.$refs.logoImg.src
@@ -113,8 +103,7 @@ export default {
           canvas.height = image.height
           var ctx = canvas.getContext('2d')
           ctx.drawImage(image, 0, 0, image.width, image.height)
-          var ext = image.src.substring(image.src.lastIndexOf('.') +1).toLowerCase()
-          // var dataURL = canvas.toDataURL('image/' + ext)
+          var ext = image.src.substring(image.src.lastIndexOf('.') + 1).toLowerCase()
           this.nearLogo = canvas.toDataURL('image/' + ext)
           this.$nextTick(() => {
             this.createQrc()
