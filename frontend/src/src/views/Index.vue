@@ -117,7 +117,7 @@ export default {
       this.isQRCode = true
       this.url = url
       this.$nextTick(() => {
-        this.$refs.qrcode.createQrc()
+        this.$refs.qrcode.createImg()
       })
     },
     cancelQRCode () {

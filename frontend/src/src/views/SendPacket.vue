@@ -57,7 +57,7 @@ export default {
     return {
       isLogin: false,
       drawMoney: '',
-      loading: false,
+      loading: true,
       yesOrNo: false,
       registerBtn: false,
       errInfo: '',

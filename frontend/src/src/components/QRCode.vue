@@ -1,11 +1,3 @@
-<!--
- * @Author: your name
- * @Date: 2021-03-01 16:22:12
- * @LastEditTime: 2021-03-09 15:30:06
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /buildlinks-near-redbag/src/components/QRCode.vue
--->
 <template>
   <transition name="el-fade-in">
     <div class="mask">
@@ -15,7 +7,7 @@
           <div class="qr-wrap" style="display: block; background-color: #fafafa;" ref="qrWrap">
             <div class="title">
               <div class="logo">
-                <img class="near-logo" :src="nearLogo" crossorigin="anonymous" alt="NEAR logo"/>
+                <img class="near-logo" ref="logoImg" :src="nearLogo" alt="NEAR logo"/>
               </div>
               <span>扫描二维码，接收红包</span>
             </div>
@@ -42,18 +34,15 @@ import html2canvas from 'html2canvas'
 export default {
   data () {
     return {
-      qrcode: ''
+      qrcode: '',
+      nearLogo: require('../assets/near-logo.svg') + `?t=${new Date().getTime()}`,
+      logoFlag: true
     }
   },
   props: {
     url: {
       type: String,
       require: true
-    }
-  },
-  computed: {
-    nearLogo () {
-      return require('../assets/near-logo.svg') + '?ts=' + new Date().getTime()
     }
   },
   methods: {
@@ -101,10 +90,44 @@ export default {
         .catch(() => {
           alert('复制失败')
         })
+    },
+    getBase64Image (img) {
+      var canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      var ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, img.width, img.height)
+      var ext = img.src.substring(img.src.lastIndexOf('.') +1).toLowerCase()
+      var dataURL = canvas.toDataURL('image/' + ext)
+      return dataURL
+    },
+    createImg () {
+      if (this.logoFlag) {
+        var img = this.$refs.logoImg.src
+        var image = new Image()
+        image.setAttribute('crossOrigin', 'anonymous')
+        image.src = img
+        image.onload = () => {
+          var canvas = document.createElement('canvas')
+          canvas.width = image.width
+          canvas.height = image.height
+          var ctx = canvas.getContext('2d')
+          ctx.drawImage(image, 0, 0, image.width, image.height)
+          var ext = image.src.substring(image.src.lastIndexOf('.') +1).toLowerCase()
+          // var dataURL = canvas.toDataURL('image/' + ext)
+          this.nearLogo = canvas.toDataURL('image/' + ext)
+          this.$nextTick(() => {
+            this.createQrc()
+            this.logoFlag = false
+          })
+        }
+      } else {
+        this.createQrc()
+      }
     }
   },
   mounted () {
-    this.createQrc()
+    this.createImg()
   },
   watch: {
     url (newValue) {
