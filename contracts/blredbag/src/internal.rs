@@ -58,7 +58,7 @@ impl RedBag {
         let ci = ClaimInfo {
             user: account_id.clone(),
             amount,
-            height: env::block_index(),
+            height: env::block_height(),
             ts: env::block_timestamp(),
         };
         rb.claim_info.push(ci);
@@ -133,12 +133,11 @@ impl RedBag {
         let random_u8: u8 = env::random_seed().iter().fold(0_u8, |acc, x| acc.wrapping_add(*x));
         let offset = (right_bound - left_bound) * random_u8 as u128 / 0x100_u128;
 
-        env::log(
+        log!(
             format!(
                 "Create random {} in scope [{}, {}]",
                 offset, left_bound, right_bound
             )
-            .as_bytes(),
         );
 
         // keep random_share illegal 
@@ -172,7 +171,7 @@ impl RedBag {
         let redbag_info = self.red_info.get(pk).unwrap();
         HumanReadableRedBrief {
             owner: redbag_info.owner,
-            id: (*pk).clone().try_into().unwrap(),
+            id: pk.clone(),
             mode: redbag_info.mode,
             count: redbag_info.count,
             balance: redbag_info.balance.into(),
@@ -185,7 +184,7 @@ impl RedBag {
 
     pub(crate) fn recv_brief(&self, pk: &PublicKey, claim: &ClaimInfo) -> HumanReadableRecvBrief {
         HumanReadableRecvBrief {
-            id: pk.clone().try_into().unwrap(),
+            id: pk.clone(),
             balance: claim.amount.into(),
             height: claim.height.into(),
             ts: claim.ts.into(),

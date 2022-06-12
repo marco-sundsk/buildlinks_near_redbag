@@ -1,15 +1,13 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
-use near_sdk::json_types::{Base58PublicKey, U128, U64};
+use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::wee_alloc;
 use near_sdk::{
     env, ext_contract, near_bindgen, AccountId, Balance, BlockHeight, Gas, Promise, PromiseResult,
-    PublicKey,
+    PublicKey, log,
 };
 use std::collections::HashSet;
 use uint::construct_uint;
-use std::convert::TryInto;
 
 mod internal;
 
@@ -29,7 +27,8 @@ const SINGLE_CLAIM_COST: Balance = 10_000_000_000_000_000_000_000;
 const MIN_REDBAG_SHARE: Balance = 100_000_000_000_000_000_000_000;
 
 /// 20T Gas attached to the callback from account creation.
-pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: Gas = 20_000_000_000_000;
+pub const TGAS: u64 = 1_000_000_000_000;
+pub const ON_CREATE_ACCOUNT_CALLBACK_GAS: Gas = Gas(20 * TGAS);
 
 /// Indicates there are no deposit for a callback for better readability.
 const NO_DEPOSIT: Balance = 0;
@@ -39,8 +38,6 @@ construct_uint! {
     pub struct U256(4);
 }
 
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// one claim info
 #[derive(BorshDeserialize, BorshSerialize, Clone)]
@@ -95,7 +92,7 @@ pub struct HumanReadableRedDetail {
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRedBrief {
     pub owner: AccountId,
-    pub id: Base58PublicKey,
+    pub id: PublicKey,
     pub mode: u8,
     pub count: u8,
     pub balance: U128,
@@ -109,7 +106,7 @@ pub struct HumanReadableRedBrief {
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableRecvBrief {
-    pub id: Base58PublicKey,
+    pub id: PublicKey,
     pub balance: U128,
     pub height: U64,
     pub ts: U64,
@@ -177,7 +174,7 @@ pub struct RedBag {
 
 impl Default for RedBag {
     fn default() -> Self {
-        env::panic(b"This contract should be initialized before usage")
+        env::panic_str("This contract should be initialized before usage")
     }
 }
 
@@ -239,7 +236,7 @@ impl RedBag {
     #[payable]
     pub fn send_redbag(
         &mut self,
-        public_key: Base58PublicKey,
+        public_key: PublicKey,
         count: u8,
         mode: u8,
         slogan: String,
@@ -251,7 +248,7 @@ impl RedBag {
         );
 
         let owner = env::signer_account_id();
-        let pk: PublicKey = public_key.clone().into();
+        let pk: PublicKey = public_key.clone();
         assert!(
             self.red_info.get(&pk).is_none(),
             "The public_key already exists"
@@ -274,7 +271,7 @@ impl RedBag {
             slogan: short_slogan.to_string(),
             balance: env::attached_deposit() - fee_cost,
             remaining_balance: env::attached_deposit() - fee_cost,
-            height: env::block_index(),
+            height: env::block_height(),
             ts: env::block_timestamp(),
             claim_info: Vec::new(),
         };
@@ -292,7 +289,7 @@ impl RedBag {
             pk,
             self.base_aka + fee_cost,
             env::current_account_id(),
-            b"create_account_and_claim,claim".to_vec(),
+            "create_account_and_claim,claim".to_string(),
         )
     }
 
@@ -300,20 +297,20 @@ impl RedBag {
     pub fn create_account_and_claim(
         &mut self,
         new_account_id: AccountId,
-        new_public_key: Base58PublicKey,
+        new_public_key: PublicKey,
     ) -> Promise {
         let pk = env::signer_account_pk();
         let amount = self.claim_redbag(pk.clone(), new_account_id.clone());
 
         Promise::new(new_account_id.clone())
             .create_account()
-            .add_full_access_key(new_public_key.into())
+            .add_full_access_key(new_public_key)
             .transfer(amount)
             .then(ext_self::on_account_created_and_claimed_ex(
                 new_account_id,
-                env::block_index().into(),
+                env::block_height().into(),
                 amount.into(),
-                &env::current_account_id(),
+                env::current_account_id(),
                 NO_DEPOSIT,
                 ON_CREATE_ACCOUNT_CALLBACK_GAS,
             ))
@@ -338,8 +335,8 @@ impl RedBag {
 
     /// 红包所有人撤回对应public_key的红包剩余金额
     /// 撤回视为自己领取剩余金额
-    pub fn revoke(&mut self, public_key: Base58PublicKey) -> Promise {
-        let pk: PublicKey = public_key.clone().into();
+    pub fn revoke(&mut self, public_key: PublicKey) -> Promise {
+        let pk: PublicKey = public_key.clone();
         let account_id = env::signer_account_id();
         // 查看红包是否存在
         let redbag = self.red_info.get(&pk);
@@ -365,7 +362,7 @@ impl RedBag {
         let ci = ClaimInfo {
             user: account_id.clone(),
             amount,
-            height: env::block_index(),
+            height: env::block_height(),
             ts: env::block_timestamp(),
         };
         rb.claim_info.push(ci);
@@ -387,8 +384,8 @@ impl RedBag {
     /************************/
 
     /// Returns the balance associated with given key.
-    pub fn get_key_balance(&self, key: Base58PublicKey) -> U128 {
-        self.red_info.get(&key.into()).expect("Key is missing")
+    pub fn get_key_balance(&self, key: PublicKey) -> U128 {
+        self.red_info.get(&key).expect("Key is missing")
             .remaining_balance
             .into()
     }
@@ -409,10 +406,10 @@ impl RedBag {
     }
 
     /// 看某个红包的详情
-    pub fn show_redbag_detail(&self, public_key: Base58PublicKey) ->  HumanReadableRedDetail {
-        let pk = public_key.into();
+    pub fn show_redbag_detail(&self, public_key: PublicKey) ->  HumanReadableRedDetail {
+        // let pk = public_key.into();
         // 查看红包是否存在
-        let redbag = self.red_info.get(&pk);
+        let redbag = self.red_info.get(&public_key);
         assert!(redbag.is_some(), "No corresponding redbag found.");
         let redbag_info = &redbag.unwrap();
 
@@ -462,9 +459,9 @@ impl RedBag {
     }
 
     /// obsolete
-    pub fn show_redbag_brief(&self, public_key: Base58PublicKey) -> HumanReadableRedBrief {
-        let pk = public_key.into();
-        self.redbag_brief(&pk)
+    pub fn show_redbag_brief(&self, public_key: PublicKey) -> HumanReadableRedBrief {
+        // let pk = public_key.into();
+        self.redbag_brief(&public_key)
     }
 
     /************************/
@@ -492,24 +489,14 @@ impl RedBag {
             // In case of failure, put the amount back.
             // 失败的情况下，回退资金及相关结构信息的更改
             let remove_ret = self.remove_recv(env::signer_account_pk(), account_id, height.into(), amount);
-            env::log(
+            log!(
                 format!(
                     "Create account and claim failed! Redbag info rolled back: {}",
                     remove_ret
                 )
-                .as_bytes(),
             );
             
         }
         creation_ret
     }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(test)]
-mod tests {
-    use std::convert::TryInto;
-
-    use near_sdk::MockedBlockchain;
-    use near_sdk::{testing_env, BlockHeight, PublicKey, VMContext};
 }

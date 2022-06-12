@@ -1,8 +1,9 @@
 [package]
-name = "blredbag"
-version = "0.3.0"
-authors = ["Marco Sun <sun.dsk1@gmail.com>"]
+name = "mock-ft"
+version = "0.0.1"
+authors = ["Marco Sun <sun.dsk1@gmail.com>", "MagicGordon"]
 edition = "2018"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -11,7 +12,6 @@ crate-type = ["cdylib", "rlib"]
 uint = { version = "=0.9.0", default-features = false }
 near-sdk = "=4.0.0-pre.9"
 near-contract-standards = "=4.0.0-pre.9"
-near-sys = "=0.1"
 
 [dev-dependencies]
 near-sdk-sim = "=4.0.0-pre.9"
